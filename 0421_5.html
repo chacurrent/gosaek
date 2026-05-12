@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <script>
+                function printStar(star) {
+                    for(let i = 1; i <= star; i++) {
+                        for(let j = 1; j <= i; j++) document.write("*");
+                        document.write("<br>")
+                    }
+                }
+        </script>
+
+    </head>
+        <body>
+            <script>
+                let N = prompt("1 + 1 = ?", 5);
+                // document.write(N);
+                if ( N % 1 != 0.) {
+                    document.write("입력 오류입니다.");
+                }
+                else if(N > 0) {
+                    N = parseInt(N);
+                    printStar(N);
+                }
+                else {document.write("입력 오류입니다.")}
+
+            </script>
+        </body>
+  
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+
+<html>
+
+    <head>
+
+    <meta charset="UTF-8">
+    <title>for 문</title>
+
+    </head>
+
+    <body>
+		<a href="../index.html" style="display:inline-block; margin: 20px; padding: 10px 20px; background:#111; color:#00ff66; text-decoration:none; border:1px solid #333; border-radius:5px; font-family:'Roboto Mono';">
+			← 홈으로 돌아가기 (cd ../)
+		</a>
+    <h3>for 문으로 10px~35px 크기 출력</h3>
+    <hr>
+    <script>
+
+        for(let size = 10; size <= 35; size += 5){
+            document.write("<span ");
+            document.write("style='font-size:" + size + "px;'>");
+            document.write(size + "px");
+            document.write("</span>")
+        }
+
+        // 이곳에 자바스크립트 코드를 작성하라.
+
+    </script>
+
+    </body>
+
+</html>

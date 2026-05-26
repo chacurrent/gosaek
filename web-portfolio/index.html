@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="고색고등학교 정보보안 개발자 지망생의 1학기 웹 프로그래밍 여정 아카이브">
+    <meta name="author" content="Cha Hyeon-chae">
+    
+    <title>웹 프로그래밍 아카이브 | GOSAEK CORE OS</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-theme="dark">
+
+    <div id="security-gateway-layer" class="gateway-overlay">
+        <div class="terminal-box">
+            <div class="terminal-header">
+                <div class="window-dots">
+                    <div class="dot red" id="bypass-trigger" title="마스터 권한 우회 접속"></div>
+                    <div class="dot yellow"></div>
+                    <div class="dot green"></div>
+                </div>
+                <div class="window-title">GOSAEK_OS_v8.0.sh</div>
+            </div>
+            <div class="terminal-stream" id="gateway-stream">
+                <div class="log-line sys">Gosaek Interactive Core System Initialized.</div>
+                <div class="log-line warn">[경고] 보안 인가 절차 누락. 인증 세션이 필요합니다.</div>
+                <div class="log-line info">* 도움말: 'help' 입력. 빠른 접근을 원하면 'unlock'을 입력하세요.</div>
+            </div>
+            <div class="terminal-prompt">
+                <span class="prompt-user">guest@gosaek:~$</span>
+                <input type="text" id="gateway-input" autocomplete="off" spellcheck="false">
+            </div>
+        </div>
+    </div>
+
+    <header class="app-header">
+        <div class="header-container">
+            <div class="profile-section">
+                <img src="images/profile.jpg" alt="차현채 프로필 이미지" class="profile-avatar" onerror="this.src='https://via.placeholder.com/60/1a1a24/00ff66?text=CH';">
+                <div class="profile-info">
+                    <h2 class="profile-name">차현채 (Cha Hyeon-chae)</h2>
+                    <p class="profile-role">정보보안 개발자 지망생 | 고색고등학교</p>
+                </div>
+            </div>
+            <div class="header-titles">
+                <h1>차현채의 1학기 웹 프로그래밍 여정</h1>
+                <p>보안과 성능을 고려한 프론트엔드 아키텍처 및 실습 산출물</p>
+            </div>
+            <div class="theme-switcher">
+                <button class="theme-btn active" data-target="dark">DARK</button>
+                <button class="theme-btn" data-target="matrix">MATRIX</button>
+                <button class="theme-btn" data-target="navy">NAVY</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="app-main">
+        <section class="telemetry-dashboard">
+            <article class="stat-card">
+                <span class="stat-label">컴파일된 산출물</span>
+                <strong class="stat-value" id="stat-nodes">0</strong>
+                <span class="stat-status">● 정상 동기화</span>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">렌더링 파이프라인</span>
+                <strong class="stat-value" id="stat-latency">0.0ms</strong>
+                <span class="stat-status info">⚡ 하드웨어 가속</span>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">보안 검증 상태</span>
+                <strong class="stat-value">안전함</strong>
+                <span class="stat-status success">✓ 취약점 없음</span>
+            </article>
+        </section>
+
+        <section class="filter-controls">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="search-input" placeholder="프로젝트명, 설명, 기술 스택 검색...">
+            </div>
+            <div class="category-filters" id="category-filters">
+                <button class="filter-btn active" data-filter="ALL">전체 보기</button>
+                <button class="filter-btn" data-filter="MARCH">3월 실습</button>
+                <button class="filter-btn" data-filter="APRIL">4월 실습</button>
+                <button class="filter-btn" data-filter="MAY">5월 프로젝트</button>
+            </div>
+        </section>
+
+        <section class="project-grid-container" id="project-viewport">
+            </section>
+    </main>
+
+    <aside class="system-monitor" id="system-monitor">
+        <div class="monitor-header" id="monitor-toggle">
+            <span class="monitor-title">실시간 백엔드 입출력 트래픽 로거</span>
+            <span class="monitor-clock" id="sys-clock">LOADING...</span>
+        </div>
+        <div class="monitor-body" id="monitor-stream"></div>
+    </aside>
+
+    <footer class="app-footer">
+        <div class="footer-content">
+            <div class="copyright">
+                &copy; 2026 Cha Hyeon-chae. All rights reserved.
+            </div>
+            <div class="contact-info">
+                Contact: <a href="mailto:security.cha@gosaek.edu">security.cha@gosaek.edu</a> | GitHub: <a href="#" target="_blank">github.com/chacurrent</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/app.js" defer></script>
+</body>
+</html>

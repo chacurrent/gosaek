@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>relative 배치</title>
+
+<style>
+    div {
+        display: inline-block;
+        height: 50px;
+        width: 50px;
+        border: 1px solid turquoise;
+        text-align: center;
+        color: aquamarine;
+        background: blueviolet;
+    }
+
+    #down:hover {
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        background: violet;
+    }
+
+    #up:hover {
+        position: relative;
+        right: 20px;
+        bottom: 20px;
+        background: blue;
+    }
+</style>
+
+
+</head>
+
+<body>
+	<a href="../index.html" style="display:inline-block; margin: 20px; padding: 10px 20px; background:#111; color:#00ff66; text-decoration:none; border:1px solid #333; border-radius:5px; font-family:'Roboto Mono';">
+			← 홈으로 돌아가기 (cd ../)
+		</a>
+
+<h3>상대 배치, relative</h3>
+
+<hr>
+
+	<div>T</div>
+
+	<div id="down">h</div>
+
+	<div >a</div>
+
+	<div>n</div>
+
+	<div id="up">k</div>
+
+	<div>s</div>
+
+</body>
+
+</html>
+

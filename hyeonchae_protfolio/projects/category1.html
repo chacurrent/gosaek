@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ko" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Lab - 역사적 고전 암호학</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Poppins:wght@400;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        :root {
+            --color-hanji-bg: #f4edd9;
+            --color-hanji-card: #fbf9f3;
+            --color-ink-black: #1a1917;
+            --color-ink-muted: #595349;
+            --color-royal-red: #8a2411;
+            --color-border: #e2d6be;
+            
+            --terminal-bg: #0a0a0a;
+            --terminal-green: #4af626;
+            --terminal-yellow: #f5d142;
+            --terminal-red: #ff3333;
+            --terminal-text: #cccccc;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--color-hanji-bg);
+            color: var(--color-ink-black);
+            font-family: 'Gowun Batang', serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-image: 
+                linear-gradient(to right, rgba(26,25,23,0.015) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(26,25,23,0.015) 1px, transparent 1px);
+            background-size: 32px 32px;
+            filter: url(#royal-hanji-filter);
+        }
+
+        header {
+            padding: 20px 40px;
+            border-bottom: 2px solid var(--color-ink-black);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .back-btn {
+            background: none; border: 1px solid var(--color-ink-black);
+            padding: 8px 16px; font-family: 'Poppins', serif; font-weight: 600;
+            cursor: pointer; color: var(--color-ink-black);
+            transition: all 0.3s ease;
+        }
+        .back-btn:hover { background-color: var(--color-ink-black); color: var(--color-hanji-bg); }
+        .header-title { font-size: 1.5rem; font-weight: 700; }
+
+        .workspace {
+            display: flex; flex: 1; height: calc(100vh - 75px); overflow: hidden;
+        }
+
+        .sidebar {
+            width: 280px; border-right: 1px solid var(--color-border);
+            padding: 30px 20px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto;
+        }
+        .cipher-tab {
+            width: 100%; text-align: left; padding: 16px;
+            background: transparent; border: 1px solid var(--color-border);
+            font-family: 'Gowun Batang', serif; font-size: 1.1rem; font-weight: 700;
+            color: var(--color-ink-muted); cursor: pointer; transition: all 0.3s ease; border-radius: 8px;
+        }
+        .cipher-tab:hover { border-color: var(--color-ink-black); color: var(--color-ink-black); }
+        .cipher-tab.active { background-color: var(--color-ink-black); color: var(--color-hanji-bg); border-color: var(--color-ink-black); }
+
+        .main-canvas {
+            flex: 1; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; gap: 30px;
+        }
+
+        .theory-section {
+            background: var(--color-hanji-card); border: 1px solid var(--color-border);
+            padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        }
+        .theory-section h2 { font-size: 2rem; margin-bottom: 16px; color: var(--color-ink-black); }
+        .theory-section p { font-size: 1.1rem; line-height: 1.6; color: var(--color-ink-muted); margin-bottom: 24px; word-break: keep-all; }
+        .math-box {
+            background: rgba(26, 25, 23, 0.03); border-left: 4px solid var(--color-royal-red);
+            padding: 20px; font-size: 1.5rem; text-align: center; overflow-x: auto; margin-bottom: 16px;
+        }
+        .math-explanation {
+            background: transparent; border: 1px dashed var(--color-border);
+            padding: 20px; font-size: 1rem; color: var(--color-ink-black);
+            line-height: 1.6; border-radius: 6px; font-family: 'Gowun Batang', serif;
+        }
+        .math-explanation strong { color: var(--color-royal-red); }
+
+        .sandbox-section {
+            background: var(--color-hanji-card); border: 1px solid var(--color-border);
+            padding: 30px; border-radius: 12px;
+        }
+        .sandbox-header { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; }
+        .io-container { display: flex; gap: 20px; align-items: stretch; }
+        .io-box { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+        .io-box label { font-family: 'Poppins', sans-serif; font-size: 0.85rem; font-weight: 600; }
+        .io-box textarea {
+            width: 100%; height: 120px; padding: 16px; resize: none;
+            background: var(--color-hanji-bg); border: 1px solid var(--color-ink-black);
+            font-family: 'Fira Code', monospace; font-size: 1rem; color: var(--color-ink-black); outline: none; border-radius: 4px;
+        }
+        .controls { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; padding: 0 20px; }
+        .key-input { width: 100px; padding: 10px; text-align: center; border: 1px solid var(--color-ink-black); background: transparent; font-family: 'Fira Code'; font-size: 1.2rem; }
+        .execute-btn {
+            background: var(--color-ink-black); color: var(--color-hanji-bg); border: none;
+            padding: 12px 24px; font-weight: 700; cursor: pointer; border-radius: 4px; font-family: 'Gowun Batang', serif; font-size: 1.1rem;
+            transition: background 0.3s ease;
+        }
+        .execute-btn:hover { background: var(--color-royal-red); }
+
+        .terminal-section {
+            background: var(--terminal-bg); border: 2px solid var(--color-ink-black);
+            border-radius: 8px; padding: 20px; height: 250px; overflow-y: auto;
+            font-family: 'Fira Code', monospace; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        }
+        .terminal-line { margin-bottom: 8px; line-height: 1.5; font-size: 0.95rem; }
+        .log-info { color: var(--terminal-text); }
+        .log-process { color: var(--terminal-yellow); }
+        .log-result { color: var(--terminal-green); }
+        .log-error { color: var(--terminal-red); }
+        .terminal-cursor { display: inline-block; width: 8px; height: 15px; background: var(--terminal-green); animation: blink 1s step-end infinite; }
+
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+        <filter id="royal-hanji-filter">
+            <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="3" result="noise" />
+            <feColorMatrix type="matrix" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.06 0" in="noise" result="monoNoise"/>
+            <feBlend mode="multiply" in="SourceGraphic" in2="monoNoise" />
+        </filter>
+    </svg>
+
+    <header>
+        <button class="back-btn" onclick="history.back()">← 메인 대시보드로 복귀</button>
+        <div class="header-title">[01] 역사적 고전 암호학</div>
+        <div style="width: 150px;"></div> 
+    </header>
+
+    <div class="workspace">
+        <nav class="sidebar" id="sidebar"></nav>
+
+        <main class="main-canvas" id="main-canvas">
+            
+            <section class="theory-section">
+                <h2 id="theory-title">로딩 중...</h2>
+                <p id="theory-desc"></p>
+                <div class="math-box" id="math-container"></div>
+                <div class="math-explanation" id="math-explanation"></div>
+            </section>
+
+            <section class="sandbox-section">
+                <div class="sandbox-header">알고리즘 샌드박스 (실시간 암호화)</div>
+                <div class="io-container">
+                    <div class="io-box">
+                        <label>평문 (Plaintext)</label>
+                        <textarea id="plain-text" placeholder="영문 알파벳을 입력하세요..."></textarea>
+                    </div>
+                    <div class="controls">
+                        <label>암호키 (Key)</label>
+                        <input type="number" id="cipher-key" class="key-input" value="3" min="1" max="25">
+                        <button class="execute-btn" id="execute-btn">분석 가동</button>
+                    </div>
+                    <div class="io-box">
+                        <label>암호문 (Ciphertext)</label>
+                        <textarea id="cipher-text" readonly></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <section class="terminal-section" id="terminal-screen"></section>
+        </main>
+		
+		<footer class="app-footer" role="contentinfo">
+            <div class="app-footer__container">
+                <p class="copyright">&copy; 20619 차현채 : 응용프로그래밍 프로젝트 완성본</p>
+                <div class="footer-meta">
+                    <span>TYPE: CHRONICLE</span>
+                    <span>v1.5.0-full-hanji</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        /** * =========================================================================
+         * [마스터 데이터 템플릿] 
+         * 앞으로는 이 CryptoData 객체 안의 내용만 바꾸면 UI가 알아서 그려집니다!
+         * =========================================================================
+         */
+        const CryptoData = {
+            caesar: {
+                id: "caesar",
+                name: "1. 시저 암호 (Caesar)",
+                title: "시저 암호 (Caesar Cipher)",
+                desc: "기원전 100년경 율리우스 카이사르가 고안한 가장 기본적인 '단일 치환 암호'입니다. 구조가 단순하여 현대 컴퓨터로는 0.001초 만에 해독되지만, 인류 암호학의 논리적 기초를 세운 위대한 첫걸음이었습니다.",
+                math: "$$E_n(x) = (x + n) \\pmod{26}$$",
+                mathExplanation: "<strong>[초간단 수식 해석]</strong><br>알파벳을 숫자로 바꿉니다(A=0, B=1 ... Z=25). 내가 글자를 밀어내고 싶은 칸 수(n)를 더합니다. 만약 Z(25)를 넘어가면 시계처럼 다시 A(0)로 돌아와야 하므로, 26으로 나눈 나머지(mod 26)를 구합니다. <strong>결국 '알파벳 원판 돌리기' 수식입니다.</strong>",
+                inputType: "number",
+                encrypt: (text, key) => {
+                    let k = parseInt(key) % 26;
+                    return text.toUpperCase().replace(/[A-Z]/g, c => String.fromCharCode(((c.charCodeAt(0) - 65 + k) % 26) + 65));
+                },
+                logs: [
+                    { type: 'info', text: "[시스템] 암호 해독 모듈 초기화 중... 대상: 시저 암호(Caesar Cipher)" },
+                    { type: 'process', text: "[분석] 통신 패킷 인터셉트 완료. 알파벳 제약 조건 확인 중..." },
+                    { type: 'process', text: "[분석] 알고리즘 판별: 단일 문자 치환(Shift) 방식 확인." },
+                    { type: 'info', text: "[공격] 무차별 대입(Brute-force) 공격 프로토콜 가동. 모든 경우의 수(25개) 탐색." },
+                    { type: 'process', text: "[진행] 키 값 k=1 테스트... 실패. k=2 테스트... 실패. k=3 테스트..." },
+                    { type: 'result', text: "[결과] 치명적 취약점 악용 성공. 0.002ms 만에 해독되었습니다." },
+                    { type: 'result', text: "[완료] 복호화 키 k={key} 도출. 원본 평문 복원 완료." }
+                ]
+            },
+            vigenere: {
+                id: "vigenere",
+                name: "2. 비즈네르 암호 (Vigenère)",
+                title: "비즈네르 암호 (Vigenère Cipher)",
+                desc: "16세기에 등장한 '다중 치환 암호'입니다. 단일 시프트 값을 쓰는 시저 암호와 달리, 키워드 길이에 따라 알파벳을 계속 다르게 밀어냅니다. 영문자의 통계적 특성(E가 가장 자주 쓰인다 등)을 없애버려 오랫동안 해독 불가 암호로 불렸습니다.",
+                math: "$$C_i = (P_i + K_i) \\pmod{26}$$",
+                mathExplanation: "<strong>[초간단 수식 해석]</strong><br>시저 암호의 업그레이드 버전입니다. 첫 번째 글자(P_1)는 첫 번째 열쇠(K_1)만큼 밀고, 두 번째 글자는 두 번째 열쇠만큼 밉니다. 비밀번호가 'KEY'라면 첫 글자는 K만큼, 두 번째는 E만큼, 세 번째는 Y만큼 미는 걸 반복합니다. <strong>열쇠가 계속 바뀌는 자물쇠</strong>라고 생각하면 쉽습니다.",
+                inputType: "text",
+                defaultKey: "KEY",
+                encrypt: (text, key) => {
+                    let kStr = key.toUpperCase().replace(/[^A-Z]/g, '') || "A";
+                    let out = "", j = 0;
+                    for(let c of text.toUpperCase()) {
+                        if(c >= 'A' && c <= 'Z') {
+                            let p = c.charCodeAt(0) - 65;
+                            let k = kStr.charCodeAt(j % kStr.length) - 65;
+                            out += String.fromCharCode(((p + k) % 26) + 65);
+                            j++;
+                        } else { out += c; }
+                    }
+                    return out;
+                },
+                logs: [
+                    { type: 'info', text: "[시스템] 다중 치환 암호 패턴 감지. 대상: 비즈네르 암호." },
+                    { type: 'process', text: "[분석] 카시스키 시험(Kasiski examination) 알고리즘 적용 중..." },
+                    { type: 'process', text: "[분석] 암호문 내 반복되는 문자열 간의 최대공약수(GCD)를 통해 키 길이(Key length) 추정." },
+                    { type: 'info', text: "[공격] 추정된 키 길이를 바탕으로 암호문을 분할." },
+                    { type: 'process', text: "[공격] 각 분할된 문자열에 알파벳 빈도수 분석(Frequency Analysis) 적용..." },
+                    { type: 'result', text: "[완료] 통계적 상관관계 매칭 성공. 사용된 키워드 도출: '{key}'." }
+                ]
+            },
+            onetimepad: {
+                id: "onetimepad",
+                name: "3. 일회성 패드 (OTP)",
+                title: "일회성 패드 (One-Time Pad)",
+                desc: "수학적으로 '절대 해독 불가능(Perfect Secrecy)'이 증명된 유일한 암호 체계입니다. 평문과 동일한 길이의 완벽한 난수를 섞으며, 한 번 쓴 난수 키는 즉시 불태워 없앱니다. 냉전 시대 미국과 소련의 직통 전화(핫라인)에 쓰였습니다.",
+                math: "$$C = P \\oplus K$$",
+                mathExplanation: "<strong>[초간단 수식 해석]</strong><br>⊕ 기호는 '두 개가 같으면 0, 다르면 1'을 내뱉는 스위치(XOR) 연산입니다. <strong>원본 글자(P)에 완전히 무작위인 동전 던지기 결과(K)를 섞는 겁니다.</strong> 이렇게 섞인 암호문(C)은 원래 흔적이 1%도 남지 않습니다. 재밌게도, 똑같은 무작위 결과(K)를 다시 ⊕ 해주면 원래 글자로 뿅 하고 돌아옵니다.",
+                inputType: "text",
+                defaultKey: "RANDOM",
+                encrypt: (text, key) => {
+                    let out = "";
+                    for(let c of text.toUpperCase()) {
+                        if(c >= 'A' && c <= 'Z') {
+                            let k = Math.floor(Math.random() * 26);
+                            out += String.fromCharCode(((c.charCodeAt(0) - 65 + k) % 26) + 65);
+                        } else { out += c; }
+                    }
+                    return out;
+                },
+                logs: [
+                    { type: 'info', text: "[시스템] 핫라인 통신망 인터셉트. 대상: 일회성 패드(OTP) 기반 난수 스트림." },
+                    { type: 'process', text: "[분석] 섀넌 엔트로피(Shannon entropy) 계산 완료. 결과: 최대치 (완벽한 난수성 확인)." },
+                    { type: 'info', text: "[공격] 양자 컴퓨팅 파워를 가상으로 동원하여 전수 조사(Exhaustive Search) 시도..." },
+                    { type: 'error', text: "[오류] 치명적 논리 오류 발생. 암호문이 모든 가능한 평문 단어와 100% 매칭됨." },
+                    { type: 'error', text: "[오류] 문맥상 의미 있는 문자열을 특정할 수 없음." },
+                    { type: 'result', text: "[완료] 해독 모듈 강제 종료. '절대적 안전성(Perfect Secrecy)' 증명. 진짜 키 없이는 해독 불가." }
+                ]
+            }
+        };
+
+        // =========================================================================
+        // 이하 로직은 템플릿 영역이므로 수정할 필요가 없습니다. (자동 렌더링 엔진)
+        // =========================================================================
+        const DOM = {
+            sidebar: document.getElementById('sidebar'),
+            title: document.getElementById('theory-title'),
+            desc: document.getElementById('theory-desc'),
+            math: document.getElementById('math-container'),
+            mathExp: document.getElementById('math-explanation'),
+            plainInput: document.getElementById('plain-text'),
+            cipherOutput: document.getElementById('cipher-text'),
+            keyInput: document.getElementById('cipher-key'),
+            execBtn: document.getElementById('execute-btn'),
+            terminal: document.getElementById('terminal-screen')
+        };
+
+        let currentCipherId = Object.keys(CryptoData)[0];
+        let isTyping = false;
+
+        function init() {
+            Object.values(CryptoData).forEach(cipher => {
+                const btn = document.createElement('button');
+                btn.className = `cipher-tab ${cipher.id === currentCipherId ? 'active' : ''}`;
+                btn.textContent = cipher.name;
+                btn.onclick = () => loadCipher(cipher.id);
+                DOM.sidebar.appendChild(btn);
+            });
+
+            loadCipher(currentCipherId);
+            DOM.plainInput.addEventListener('input', runEncryption);
+            DOM.keyInput.addEventListener('input', runEncryption);
+            DOM.execBtn.addEventListener('click', triggerTerminalEvent);
+        }
+
+        function loadCipher(id) {
+            currentCipherId = id;
+            const data = CryptoData[id];
+
+            document.querySelectorAll('.cipher-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.includes(data.name));
+            });
+
+            DOM.title.textContent = data.title;
+            DOM.desc.innerHTML = data.desc;
+            DOM.math.innerHTML = data.math;
+            DOM.mathExp.innerHTML = data.mathExplanation; 
+            
+            renderMathInElement(DOM.math, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ]
+            });
+
+            DOM.keyInput.type = data.inputType;
+            DOM.keyInput.value = data.inputType === 'text' ? data.defaultKey : 3;
+            
+            DOM.plainInput.value = "CRYPTOGRAPHY IS THE ULTIMATE DEFENSE";
+            runEncryption();
+
+            DOM.terminal.innerHTML = `<span class="terminal-cursor"></span>`;
+        }
+
+        function runEncryption() {
+            const data = CryptoData[currentCipherId];
+            DOM.cipherOutput.value = data.encrypt(DOM.plainInput.value, DOM.keyInput.value);
+        }
+
+        async function triggerTerminalEvent() {
+            if (isTyping) return;
+            isTyping = true;
+            DOM.terminal.innerHTML = ""; 
+            
+            const logs = CryptoData[currentCipherId].logs;
+            const keyVal = DOM.keyInput.value;
+
+            for (let i = 0; i < logs.length; i++) {
+                let logText = logs[i].text.replace('{key}', keyVal);
+                await typeText(logText, `log-${logs[i].type}`);
+                await sleep(300); // 문장과 문장 사이의 약간의 대기 시간
+            }
+
+            DOM.terminal.innerHTML += `<span class="terminal-cursor"></span>`;
+            isTyping = false;
+        }
+
+        // [핵심 변경 포인트] 랜덤 타이핑 속도 구현
+        function typeText(text, className) {
+            return new Promise(resolve => {
+                const lineDiv = document.createElement('div');
+                lineDiv.className = `terminal-line ${className}`;
+                DOM.terminal.appendChild(lineDiv);
+                
+                let charIndex = 0;
+                
+                function type() {
+                    if (charIndex < text.length) {
+                        lineDiv.textContent += text.charAt(charIndex);
+                        charIndex++;
+                        DOM.terminal.scrollTop = DOM.terminal.scrollHeight; 
+
+                        // 기본 타이핑 속도 (10ms ~ 50ms 랜덤)
+                        let speed = Math.random() * 40 + 10;
+                        
+                        // 3% 확률로 해커가 생각하거나 네트워크 렉이 걸리는 효과 (150ms 추가 대기)
+                        if (Math.random() < 0.03) speed += 150;
+
+                        setTimeout(type, speed); 
+                    } else {
+                        resolve();
+                    }
+                }
+                type(); // 재귀 호출 시작
+            });
+        }
+
+        function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ko" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Lab - [03] 전자서명 및 무결성</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Poppins:wght@400;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        :root {
+            --color-hanji-bg: #f4edd9;
+            --color-hanji-card: #fbf9f3;
+            --color-ink-black: #1a1917;
+            --color-ink-muted: #595349;
+            --color-royal-red: #8a2411;
+            --color-border: #e2d6be;
+            
+            --terminal-bg: #0a0a0a;
+            --terminal-green: #4af626;
+            --terminal-yellow: #f5d142;
+            --terminal-red: #ff3333;
+            --terminal-text: #cccccc;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--color-hanji-bg);
+            color: var(--color-ink-black);
+            font-family: 'Gowun Batang', serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-image: 
+                linear-gradient(to right, rgba(26,25,23,0.015) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(26,25,23,0.015) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+
+        header {
+            padding: 20px 40px;
+            border-bottom: 2px solid var(--color-ink-black);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .back-btn {
+            background: none; border: 1px solid var(--color-ink-black);
+            padding: 8px 16px; font-family: 'Poppins', serif; font-weight: 600;
+            cursor: pointer; color: var(--color-ink-black);
+            transition: all 0.3s ease;
+        }
+        .back-btn:hover { background-color: var(--color-ink-black); color: var(--color-hanji-bg); }
+        .header-title { font-size: 1.5rem; font-weight: 700; }
+
+        .workspace {
+            display: flex; flex: 1; height: calc(100vh - 75px); overflow: hidden;
+        }
+
+        .sidebar {
+            width: 280px; border-right: 1px solid var(--color-border);
+            padding: 30px 20px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto;
+        }
+        .cipher-tab {
+            width: 100%; text-align: left; padding: 16px;
+            background: transparent; border: 1px solid var(--color-border);
+            font-family: 'Gowun Batang', serif; font-size: 1.1rem; font-weight: 700;
+            color: var(--color-ink-muted); cursor: pointer; transition: all 0.3s ease; border-radius: 8px;
+        }
+        .cipher-tab:hover { border-color: var(--color-ink-black); color: var(--color-ink-black); }
+        .cipher-tab.active { background-color: var(--color-ink-black); color: var(--color-hanji-bg); border-color: var(--color-ink-black); }
+
+        .main-canvas {
+            flex: 1; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; gap: 30px;
+        }
+
+        .theory-section {
+            background: var(--color-hanji-card); border: 1px solid var(--color-border);
+            padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        }
+        .theory-section h2 { font-size: 2rem; margin-bottom: 16px; color: var(--color-ink-black); }
+        .theory-section p { font-size: 1.1rem; line-height: 1.6; color: var(--color-ink-muted); margin-bottom: 24px; word-break: keep-all; }
+        .math-box {
+            background: rgba(26, 25, 23, 0.03); border-left: 4px solid var(--color-royal-red);
+            padding: 20px; font-size: 1.5rem; text-align: center; overflow-x: auto; margin-bottom: 16px;
+        }
+        .math-explanation {
+            background: transparent; border: 1px dashed var(--color-border);
+            padding: 20px; font-size: 1rem; color: var(--color-ink-black);
+            line-height: 1.6; border-radius: 6px; font-family: 'Gowun Batang', serif;
+        }
+        .math-explanation strong { color: var(--color-royal-red); }
+
+        .sandbox-section {
+            background: var(--color-hanji-card); border: 1px solid var(--color-border);
+            padding: 30px; border-radius: 12px;
+        }
+        .sandbox-header { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; }
+        .io-container { display: flex; gap: 20px; align-items: stretch; }
+        .io-box { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+        .io-box label { font-family: 'Poppins', sans-serif; font-size: 0.85rem; font-weight: 600; }
+        .io-box textarea {
+            width: 100%; height: 120px; padding: 16px; resize: none;
+            background: var(--color-hanji-bg); border: 1px solid var(--color-ink-black);
+            font-family: 'Fira Code', monospace; font-size: 1rem; color: var(--color-ink-black); outline: none; border-radius: 4px;
+        }
+        .controls { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; padding: 0 20px; }
+        .key-input { width: 140px; padding: 10px; text-align: center; border: 1px solid var(--color-ink-black); background: transparent; font-family: 'Fira Code'; font-size: 1rem; }
+        .execute-btn {
+            background: var(--color-ink-black); color: var(--color-hanji-bg); border: none;
+            padding: 12px 24px; font-weight: 700; cursor: pointer; border-radius: 4px; font-family: 'Gowun Batang', serif; font-size: 1.1rem;
+            transition: background 0.3s ease;
+        }
+        .execute-btn:hover { background: var(--color-royal-red); }
+
+        .terminal-section {
+            background: var(--terminal-bg); border: 2px solid var(--color-ink-black);
+            border-radius: 8px; padding: 20px; height: 250px; overflow-y: auto;
+            font-family: 'Fira Code', monospace; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        }
+        .terminal-line { margin-bottom: 8px; line-height: 1.5; font-size: 0.95rem; }
+        .log-info { color: var(--terminal-text); }
+        .log-process { color: var(--terminal-yellow); }
+        .log-result { color: var(--terminal-green); }
+        .log-error { color: var(--terminal-red); }
+        .terminal-cursor { display: inline-block; width: 8px; height: 15px; background: var(--terminal-green); animation: blink 1s step-end infinite; }
+
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <button class="back-btn" onclick="history.back()">← 메인 대시보드로 복귀</button>
+        <div class="header-title">[03] 전자서명 및 무결성 검증</div>
+        <div style="width: 150px;"></div> 
+    </header>
+
+    <div class="workspace">
+        <nav class="sidebar" id="sidebar"></nav>
+
+        <main class="main-canvas" id="main-canvas">
+            
+            <section class="theory-section">
+                <h2 id="theory-title">로딩 중...</h2>
+                <p id="theory-desc"></p>
+                <div class="math-box" id="math-container"></div>
+                <div class="math-explanation" id="math-explanation"></div>
+            </section>
+
+            <section class="sandbox-section">
+                <div class="sandbox-header">무결성 검증 시뮬레이터</div>
+                <div class="io-container">
+                    <div class="io-box">
+                        <label id="plain-label">메시지 본문 (Message)</label>
+                        <textarea id="plain-text" placeholder="데이터를 입력하세요..."></textarea>
+                    </div>
+                    <div class="controls">
+                        <label id="key-label">인증 키 (Auth Key)</label>
+                        <input type="text" id="cipher-key" class="key-input" value="">
+                        <button class="execute-btn" id="execute-btn">데이터 검증</button>
+                    </div>
+                    <div class="io-box">
+                        <label>검증 태그 (Digital Signature/MAC)</label>
+                        <textarea id="cipher-text" readonly></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <section class="terminal-section" id="terminal-screen"></section>
+        </main>
+		
+		<footer class="app-footer" role="contentinfo">
+            <div class="app-footer__container">
+                <p class="copyright">&copy; 20619 차현채 : 응용프로그래밍 프로젝트 완성본</p>
+                <div class="footer-meta">
+                    <span>TYPE: CHRONICLE</span>
+                    <span>v1.5.0-full-hanji</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const CryptoData = {
+            rsa_sig: {
+                id: "rsa_sig",
+                name: "1. RSA 전자서명",
+                title: "RSA 전자서명 (Digital Signature)",
+                desc: "공개키 암호화를 거꾸로 뒤집은 기술입니다. 보낼 내용을 '나만 가진 개인키'로 서명하고, 세상 누구든 '나의 공개키'로 이를 복호화해 확인하며 발신자의 신원을 신뢰합니다.",
+                math: "$$S = M^d \\pmod n \\quad \\text{(서명 생성)}$$",
+                mathExplanation: "<strong>[초간단 수식 해석]</strong><br>메시지($M$)를 내 개인키($d$)만큼 거듭제곱하여 서명($S$)을 만듭니다. 본질은 <strong>'절대 위조할 수 없는 디지털 지장'</strong>을 찍는 것입니다. 수신자는 이 결과물을 내 공개키($e$)로 풀어보고 원래 메시지가 나오면 <strong>'아, 이건 진짜 그 사람이 보낸 명령이구나!'</strong> 하고 안심합니다.",
+                inputType: "text",
+                defaultKey: "Priv_Key_#301",
+                keyLabel: "서명용 개인키",
+                plainLabel: "서명할 문서 내용",
+                encrypt: (text, key) => {
+                    let hash = 0;
+                    for (let i = 0; i < text.length; i++) hash = Math.imul(37, hash) + text.charCodeAt(i) | 0;
+                    const hex = Math.abs(hash).toString(16).padStart(12, '0').toUpperCase();
+                    return `[Digital Signature Block]\nAlgorithm: RSASSA-PKCS1\nHash: SHA-256\nSignature: 0x${hex}FA... (Verified)`;
+                },
+                logs: [
+                    { type: 'info', text: "[시스템] 서명 검증 알고리즘 가동. 대상 문서: '{plain}'." },
+                    { type: 'process', text: "[분석] 매칭된 발신자의 개인키 지표 확인: {key}." },
+                    { type: 'info', text: "[공격] 중간자(MitM)가 문서 조작 후 위조된 서명 주입을 시도합니다." },
+                    { type: 'process', text: "[진행] 공개키를 이용한 복호화 검증 연산 수행 중..." },
+                    { type: 'error', text: "[오류] 서명 블록 해시값 불일치! 개인키 '{key}' 없이는 정상 서명 조작 불가." },
+                    { type: 'result', text: "[방어 성공] 변조 탐지 완료. 전송된 데이터의 신뢰성을 완벽히 거부함." }
+                ]
+            },
+            hmac: {
+                id: "hmac",
+                name: "2. HMAC (메시지 인증)",
+                title: "해시 메시지 인증 코드 (HMAC)",
+                desc: "데이터가 중간에 조작되지 않았는지(무결성)를 사전에 공유한 비밀번호를 섞어 확인하는 기술입니다. 비밀키를 모르면 똑같은 해시 태그를 다시 만들 수 없습니다.",
+                math: "$$\\text{HMAC}(K, M) = H(K \\oplus \\text{opad} \\parallel H(K \\oplus \\text{ipad} \\parallel M))$$",
+                mathExplanation: "<strong>[초간단 수식 해석]</strong><br>메시지($M$)에 비밀키($K$)를 앞뒤로 감싸서 해시 함수를 돌리는 구조입니다. <strong>'특수한 열쇠로만 열 수 있는 투명한 봉인 스티커'</strong>를 붙이는 것과 같습니다. 해커가 내용을 바꿔도 비밀키를 모르면 스티커를 재발급할 수 없어 <strong>'누가 건드렸다'</strong>는 사실이 바로 탄로 납니다.",
+                inputType: "text",
+                defaultKey: "SECRET_KEY_99",
+                keyLabel: "공유 비밀키",
+                plainLabel: "전송 패킷 데이터",
+                encrypt: (text, key) => {
+                    let hash = 0;
+                    const combined = text + key;
+                    for (let i = 0; i < combined.length; i++) hash = Math.imul(31, hash) + combined.charCodeAt(i) | 0;
+                    return `[HMAC-SHA256 Tag]\n0x${Math.abs(hash).toString(16).toUpperCase()}BC82...`;
+                },
+                logs: [
+                    { type: 'info', text: "[시스템] 패킷 라우터 도청 시작. 실시간 데이터 '{plain}' 감지." },
+                    { type: 'process', text: "[분석] 변조 공격 주입 시도. 검증 키 '{key}' 매칭 연산 돌입." },
+                    { type: 'info', text: "[공격] 길이 연장 공격(Length Extension) 페이로드 강제 주입." },
+                    { type: 'error', text: "[오류] HMAC 내부 중첩 해시 구조로 인해 단순 해시 위조 실패." },
+                    { type: 'result', text: "[방어 성공] 무결성 검증 실패(Integrity Error). 조작된 데이터 차단 성공." }
+                ]
+            },
+            pki: {
+                id: "pki",
+                name: "3. PKI 및 인증서",
+                title: "PKI 및 공개키 인증서 (X.509)",
+                desc: "'이 공개키가 진짜 그 사람의 키가 맞는가?'라는 문제를 해결하기 위해, 신뢰할 수 있는 중앙 기관(CA)이 디지털 도장을 찍어 보증해주는 신뢰 체계입니다.",
+                math: "$$\\text{Cert}_{A} = \\text{Sign}_{CA}(ID_{A} \\parallel PU_{A})$$",
+                mathExplanation: "<strong>[초간단 수식 해석]</strong><br>사용자의 신분증($ID$)과 공개키($PU$)를 합친 뒤, 신뢰 기관의 개인키($Sign_{CA}$)로 도장을 쾅 찍은 형태입니다. 쉽게 말해 <strong>'국가 인증 신분증'</strong>입니다. 웹 브라우저는 이 인증서를 보고 우리가 접속한 사이트가 진짜 네이버나 구글이 맞는지 구별합니다.",
+                inputType: "text",
+                defaultKey: "Root_CA_Global",
+                keyLabel: "발급 인증 기관(CA)",
+                plainLabel: "접속할 도메인",
+                encrypt: (text, key) => {
+                    return `[X.509 Digital Certificate]\nSubject: ${text}\nIssuer: ${key}\nStatus: SIGNED & TRUSTED`;
+                },
+                logs: [
+                    { type: 'info', text: "[시스템] '{plain}' 주소로 도메인 우회 피싱 공격 시도." },
+                    { type: 'process', text: "[분석] 가짜 인증서(Self-Signed Cert) 강제 주입 시도." },
+                    { type: 'info', text: "[공격] 브라우저 핸드셰이크 프로토콜 변조 시도 중..." },
+                    { type: 'error', text: "[경고] 공인 기관 '{key}'의 서명 체인 검증 실패! 허가되지 않은 서명자." },
+                    { type: 'result', text: "[방어 성공] 브라우저 단에서 통신을 즉시 거부하고 경고창 출력." }
+                ]
+            }
+        };
+
+        const DOM = {
+            sidebar: document.getElementById('sidebar'),
+            title: document.getElementById('theory-title'),
+            desc: document.getElementById('theory-desc'),
+            math: document.getElementById('math-container'),
+            mathExp: document.getElementById('math-explanation'),
+            plainLabel: document.getElementById('plain-label'),
+            plainInput: document.getElementById('plain-text'),
+            cipherOutput: document.getElementById('cipher-text'),
+            keyLabel: document.getElementById('key-label'),
+            keyInput: document.getElementById('cipher-key'),
+            execBtn: document.getElementById('execute-btn'),
+            terminal: document.getElementById('terminal-screen')
+        };
+
+        let currentCipherId = Object.keys(CryptoData)[0];
+        let isTyping = false;
+
+        function init() {
+            Object.values(CryptoData).forEach(cipher => {
+                const btn = document.createElement('button');
+                btn.className = `cipher-tab ${cipher.id === currentCipherId ? 'active' : ''}`;
+                btn.textContent = cipher.name;
+                btn.onclick = () => loadCipher(cipher.id);
+                DOM.sidebar.appendChild(btn);
+            });
+
+            loadCipher(currentCipherId);
+            DOM.plainInput.addEventListener('input', runEncryption);
+            DOM.keyInput.addEventListener('input', runEncryption);
+            DOM.execBtn.addEventListener('click', triggerTerminalEvent);
+        }
+
+        function loadCipher(id) {
+            currentCipherId = id;
+            const data = CryptoData[id];
+
+            document.querySelectorAll('.cipher-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.includes(data.name));
+            });
+
+            DOM.title.textContent = data.title;
+            DOM.desc.innerHTML = data.desc;
+            DOM.math.innerHTML = data.math;
+            DOM.mathExp.innerHTML = data.mathExplanation; 
+            
+            const katexOptions = {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ]
+            };
+            renderMathInElement(DOM.math, katexOptions);
+            renderMathInElement(DOM.mathExp, katexOptions);
+
+            DOM.keyLabel.textContent = data.keyLabel;
+            DOM.keyInput.type = data.inputType;
+            DOM.keyInput.value = data.defaultKey;
+            
+            DOM.plainLabel.textContent = data.plainLabel;
+            if(id === "rsa_sig") DOM.plainInput.value = "이 문서는 변조되지 않은 본인의 서신입니다.";
+            else if(id === "hmac") DOM.plainInput.value = "Transaction: Send 50000 KRW"; 
+            else DOM.plainInput.value = "www.secure-bank.com";
+            
+            runEncryption();
+            DOM.terminal.innerHTML = `<span class="terminal-cursor"></span>`;
+        }
+
+        function runEncryption() {
+            const data = CryptoData[currentCipherId];
+            DOM.cipherOutput.value = data.encrypt(DOM.plainInput.value, DOM.keyInput.value);
+        }
+
+        async function triggerTerminalEvent() {
+            if (isTyping) return;
+            isTyping = true;
+            DOM.terminal.innerHTML = ""; 
+            
+            const logs = CryptoData[currentCipherId].logs;
+            const currentPlain = DOM.plainInput.value.substring(0, 15) + (DOM.plainInput.value.length > 15 ? "..." : "");
+            const currentKey = DOM.keyInput.value;
+
+            for (let i = 0; i < logs.length; i++) {
+                let dynamicText = logs[i].text
+                    .replace(/{plain}/g, currentPlain || "빈 값")
+                    .replace(/{key}/g, currentKey || "없음");
+
+                await typeText(dynamicText, `log-${logs[i].type}`);
+                await sleep(300); 
+            }
+
+            DOM.terminal.innerHTML += `<span class="terminal-cursor"></span>`;
+            isTyping = false;
+        }
+
+        function typeText(text, className) {
+            return new Promise(resolve => {
+                const lineDiv = document.createElement('div');
+                lineDiv.className = `terminal-line ${className}`;
+                DOM.terminal.appendChild(lineDiv);
+                
+                let charIndex = 0;
+                
+                function type() {
+                    if (charIndex < text.length) {
+                        lineDiv.textContent += text.charAt(charIndex);
+                        charIndex++;
+                        DOM.terminal.scrollTop = DOM.terminal.scrollHeight; 
+
+                        let speed = Math.random() * 40 + 10;
+                        if (Math.random() < 0.03) speed += 150;
+
+                        setTimeout(type, speed); 
+                    } else {
+                        resolve();
+                    }
+                }
+                type(); 
+            });
+        }
+
+        function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

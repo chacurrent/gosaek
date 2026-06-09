@@ -1,0 +1,282 @@
+/* ==========================================================================
+   1. TRADITIONAL HANJI SPECIFICATION (디자인 토큰 복구)
+   ========================================================================== */
+:root {
+    --color-hanji-bg: #f4edd9;       /* 실록 서책의 중후한 미색 */
+    --color-hanji-card: #fbf9f3;     /* 정제된 한지 내지 색상 */
+    --color-ink-black: #1a1917;      /* 서예용 깊은 먹색 */
+    --color-ink-muted: #595349;      /* 서체용 부드러운 먹색 */
+    --color-ink-light: #ad9f8c;      /* 얇은 선용 회묵색 */
+    --color-royal-red: #8a2411;      /* 어보 및 인장용 전통 홍색 */
+    
+    --sys-bg: var(--color-hanji-bg);
+    --sys-surface: var(--color-hanji-card);
+    --sys-border: #e2d6be;           
+    --sys-border-hover: var(--color-royal-red); 
+    --sys-text-main: var(--color-ink-black);
+    --sys-text-sub: var(--color-ink-muted);
+    --sys-text-mono: var(--color-ink-light);
+    
+    --font-size-hero: clamp(4.5rem, 13vw, 155px); 
+    --font-weight-black: 700; 
+    --font-weight-bold: 700;
+    
+    --radius-max: 26px; 
+    --max-content-width: 1520px;
+    --ease-premium: cubic-bezier(0.25, 1, 0.5, 1);
+    --transition-all: all 0.5s var(--ease-premium);
+    
+    --shadow-soft-base: 0 4px 24px rgba(26, 25, 23, 0.02); 
+    --shadow-soft-elevated: 0 16px 40px rgba(138, 36, 17, 0.06); 
+}
+
+/* 반전 모드(Dark Mode) 토큰 복구 */
+body.dark-mode {
+    --sys-bg: #181614;
+    --sys-surface: #22201d;
+    --sys-border: #33302b;
+    --sys-border-hover: #b33620;
+    --sys-text-main: #f5ede0;
+    --sys-text-sub: #baa996;
+    --sys-text-mono: #6b6357;
+    --shadow-soft-base: 0 4px 30px rgba(0, 0, 0, 0.4);
+    --shadow-soft-elevated: 0 20px 50px rgba(0, 0, 0, 0.7);
+}
+
+/* ==========================================================================
+   2. MODERN RESET & TEXTURE MAPPING
+   ========================================================================== */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    background-color: var(--sys-bg);
+    color: var(--sys-text-main);
+    font-family: 'Gowun Batang', 'Poppins', serif; 
+    overflow-x: hidden;
+    min-height: 100vh;
+    transition: background-color 0.5s var(--ease-premium);
+    
+    /* 한지 조직선 느낌을 주기 위한 미세 격자 선형 그라데이션 */
+    background-image: 
+        linear-gradient(to right, rgba(26,25,23,0.015) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(26,25,23,0.015) 1px, transparent 1px);
+    background-size: 32px 32px;
+    
+    /* 완벽한 흑백 한지 필터 적용 */
+    filter: url(#royal-hanji-filter);
+}
+
+/* 프리로더 스크린 아키텍처 복구 */
+.preloader {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: var(--sys-bg);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.5s var(--ease-premium), visibility 0.5s;
+}
+.preloader--hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+.preloader__spinner {
+    width: 36px; height: 36px;
+    border: 2px solid var(--sys-border);
+    border-top-color: var(--color-royal-red);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+}
+
+/* ==========================================================================
+   3. STRUCTURAL FRAMES & HERO
+   ========================================================================== */
+.dashboard-app-context {
+    width: 100%;
+    max-width: var(--max-content-width);
+    margin: 0 auto;
+    padding: 0 40px 100px 40px;
+}
+
+.app-header {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--sys-border);
+    margin-bottom: 40px;
+}
+.app-header__container {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.app-header__telemetry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Poppins', monospace;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--sys-text-sub);
+}
+.status-pulse {
+    width: 6px; height: 6px;
+    background-color: var(--color-royal-red);
+    border-radius: 50%;
+    display: inline-block;
+}
+.util-btn {
+    background: none; border: 1px solid var(--sys-border);
+    color: var(--sys-text-main); padding: 6px 14px;
+    border-radius: 8px; font-size: 0.75rem; font-weight: 700;
+    cursor: pointer; font-family: 'Poppins', monospace; transition: var(--transition-all);
+}
+.util-btn:hover { background-color: var(--sys-text-main); color: var(--sys-bg); border-color: var(--sys-text-main); }
+
+/* 거대 타이틀 */
+.hero-viewport {
+    text-align: center;
+    padding: 50px 0 20px 0;
+}
+.hero-viewport__title {
+    font-size: var(--font-size-hero);
+    font-weight: var(--font-weight-black);
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    color: var(--sys-text-main);
+    margin-bottom: 35px;
+}
+.hero-viewport__divider {
+    width: 100%;
+    height: 1px;
+    background-color: var(--sys-border);
+    margin: 0 auto;
+}
+
+/* ==========================================================================
+   4. PRECISION GRID SYSTEM (3 + 4 분기 구조)
+   ========================================================================== */
+.dashboard-stage {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    margin-top: 40px;
+}
+
+.grid-container {
+    display: grid;
+    gap: 32px;
+    width: 100%;
+}
+
+.grid-container--3cols {
+    grid-template-columns: repeat(3, 1fr);
+    padding: 0 6%;
+}
+
+.grid-container--4cols {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+/* ==========================================================================
+   5. COMPONENT: COMPACT PREMIUM CARD
+   ========================================================================== */
+.component-card-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    opacity: 0;
+    transform: translateY(30px);
+    animation: mountAnimation 0.8s var(--ease-premium) forwards;
+}
+
+.component-card-node__year {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--sys-text-main);
+    margin-bottom: 12px;
+    font-family: 'Poppins', serif;
+    letter-spacing: -0.02em;
+}
+
+.component-card-node__body {
+    width: 100%;
+    background-color: var(--sys-surface);
+    border: 1px solid var(--sys-border);
+    border-radius: var(--radius-max);
+    padding: 42px 28px;
+    text-align: center;
+    min-height: 175px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-shadow: var(--shadow-soft-base);
+    transition: var(--transition-all);
+    cursor: pointer;
+    position: relative;
+    outline: none;
+    background-image: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 100__);
+}
+
+.component-card-node__index {
+    font-family: 'Poppins', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-royal-red);
+    margin-bottom: 12px;
+}
+
+.component-card-node__title {
+    font-size: 1.25rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--sys-text-main);
+    margin-bottom: 12px;
+    letter-spacing: -0.02em;
+}
+
+.component-card-node__desc {
+    font-size: 0.88rem;
+    color: var(--sys-text-sub);
+    line-height: 1.5;
+    word-break: keep-all;
+}
+
+.component-card-node__body:hover,
+.component-card-node__body:focus-visible {
+    transform: translateY(-8px);
+    border-color: var(--sys-border-hover);
+    box-shadow: var(--shadow-soft-elevated);
+}
+
+/* ==========================================================================
+   6. RESPONSIVE & FOOTER
+   ========================================================================== */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes mountAnimation { to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 1200px) {
+    .grid-container--3cols { padding: 0; grid-template-columns: repeat(3, 1fr); }
+    .grid-container--4cols { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 850px) {
+    .dashboard-app-context { padding: 0 20px 60px 20px; }
+    .grid-container--3cols, .grid-container--4cols { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 550px) {
+    .grid-container--3cols, .grid-container--4cols { grid-template-columns: 1fr; }
+    .hero-viewport__title { font-size: 3.2rem; }
+}
+
+.app-footer { margin-top: 80px; padding-top: 24px; border-top: 1px solid var(--sys-border); font-size: 0.8rem; color: var(--sys-text-mono); }
+.app-footer__container { display: flex; justify-content: space-between; }
+.footer-meta { display: flex; gap: 16px; font-family: 'Poppins', monospace; }

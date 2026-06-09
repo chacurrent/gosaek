@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ko" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Lab - [04] 현대 대칭키 암호</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Poppins:wght@400;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        :root {
+            --color-hanji-bg: #f4edd9;
+            --color-hanji-card: #fbf9f3;
+            --color-ink-black: #1a1917;
+            --color-ink-muted: #595349;
+            --color-royal-red: #8a2411;
+            --color-border: #e2d6be;
+            
+            --terminal-bg: #0a0a0a;
+            --terminal-green: #4af626;
+            --terminal-yellow: #f5d142;
+            --terminal-red: #ff3333;
+            --terminal-text: #cccccc;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--color-hanji-bg);
+            color: var(--color-ink-black);
+            font-family: 'Gowun Batang', serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-image: 
+                linear-gradient(to right, rgba(26,25,23,0.015) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(26,25,23,0.015) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+
+        header {
+            padding: 20px 40px;
+            border-bottom: 2px solid var(--color-ink-black);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .back-btn {
+            background: none; border: 1px solid var(--color-ink-black);
+            padding: 8px 16px; font-family: 'Poppins', serif; font-weight: 600;
+            cursor: pointer; color: var(--color-ink-black);
+            transition: all 0.3s ease;
+        }
+        .back-btn:hover { background-color: var(--color-ink-black); color: var(--color-hanji-bg); }
+        .header-title { font-size: 1.5rem; font-weight: 700; }
+
+        .workspace {
+            display: flex; flex: 1; height: calc(100vh - 75px); overflow: hidden;
+        }
+
+        .sidebar {
+            width: 280px; border-right: 1px solid var(--color-border);
+            padding: 30px 20px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto;
+        }
+        .cipher-tab {
+            width: 100%; text-align: left; padding: 16px;
+            background: transparent; border: 1px solid var(--color-border);
+            font-family: 'Gowun Batang', serif; font-size: 1.1rem; font-weight: 700;
+            color: var(--color-ink-muted); cursor: pointer; transition: all 0.3s ease; border-radius: 8px;
+        }
+        .cipher-tab:hover { border-color: var(--color-ink-black); color: var(--color-ink-black); }
+        .cipher-tab.active { background-color: var(--color-ink-black); color: var(--color-hanji-bg); border-color: var(--color-ink-black); }
+
+        .main-canvas {
+            flex: 1; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; gap: 30px;
+        }
+
+        .theory-section {
+            background: var(--color-hanji-card); border: 1px solid var(--color-border);
+            padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        }
+        .theory-section h2 { font-size: 2rem; margin-bottom: 16px; color: var(--color-ink-black); }
+        .theory-section p { font-size: 1.1rem; line-height: 1.6; color: var(--color-ink-muted); margin-bottom: 24px; word-break: keep-all; }
+        .math-box {
+            background: rgba(26, 25, 23, 0.03); border-left: 4px solid var(--color-royal-red);
+            padding: 20px; font-size: 1.5rem; text-align: center; overflow-x: auto; margin-bottom: 16px;
+        }
+        .math-explanation {
+            background: transparent; border: 1px dashed var(--color-border);
+            padding: 20px; font-size: 1rem; color: var(--color-ink-black);
+            line-height: 1.6; border-radius: 6px; font-family: 'Gowun Batang', serif;
+        }
+        .math-explanation strong { color: var(--color-royal-red); }
+
+        .sandbox-section {
+            background: var(--color-hanji-card); border: 1px solid var(--color-border);
+            padding: 30px; border-radius: 12px;
+        }
+        .sandbox-header { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; }
+        .io-container { display: flex; gap: 20px; align-items: stretch; }
+        .io-box { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+        .io-box label { font-family: 'Poppins', sans-serif; font-size: 0.85rem; font-weight: 600; }
+        .io-box textarea {
+            width: 100%; height: 120px; padding: 16px; resize: none;
+            background: var(--color-hanji-bg); border: 1px solid var(--color-ink-black);
+            font-family: 'Fira Code', monospace; font-size: 1rem; color: var(--color-ink-black); outline: none; border-radius: 4px;
+        }
+        .controls { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; padding: 0 20px; }
+        .key-input { width: 140px; padding: 10px; text-align: center; border: 1px solid var(--color-ink-black); background: transparent; font-family: 'Fira Code'; font-size: 1rem; }
+        .execute-btn {
+            background: var(--color-ink-black); color: var(--color-hanji-bg); border: none;
+            padding: 12px 24px; font-weight: 700; cursor: pointer; border-radius: 4px; font-family: 'Gowun Batang', serif; font-size: 1.1rem;
+            transition: background 0.3s ease;
+        }
+        .execute-btn:hover { background: var(--color-royal-red); }
+
+        .terminal-section {
+            background: var(--terminal-bg); border: 2px solid var(--color-ink-black);
+            border-radius: 8px; padding: 20px; height: 250px; overflow-y: auto;
+            font-family: 'Fira Code', monospace; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        }
+        .terminal-line { margin-bottom: 8px; line-height: 1.5; font-size: 0.95rem; }
+        .log-info { color: var(--terminal-text); }
+        .log-process { color: var(--terminal-yellow); }
+        .log-result { color: var(--terminal-green); }
+        .log-error { color: var(--terminal-red); }
+        .terminal-cursor { display: inline-block; width: 8px; height: 15px; background: var(--terminal-green); animation: blink 1s step-end infinite; }
+
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <button class="back-btn" onclick="history.back()">← 메인 대시보드로 복귀</button>
+        <div class="header-title">[04] 현대 대칭키 암호 (1970~2001)</div>
+        <div style="width: 150px;"></div> 
+    </header>
+
+    <div class="workspace">
+        <nav class="sidebar" id="sidebar"></nav>
+
+        <main class="main-canvas" id="main-canvas">
+            
+            <section class="theory-section">
+                <h2 id="theory-title">로딩 중...</h2>
+                <p id="theory-desc"></p>
+                <div class="math-box" id="math-container"></div>
+                <div class="math-explanation" id="math-explanation"></div>
+            </section>
+
+            <section class="sandbox-section">
+                <div class="sandbox-header">대칭키 블록 암호 샌드박스</div>
+                <div class="io-container">
+                    <div class="io-box">
+                        <label id="plain-label">평문 (Plaintext)</label>
+                        <textarea id="plain-text" placeholder="데이터를 입력하세요..."></textarea>
+                    </div>
+                    <div class="controls">
+                        <label id="key-label">대칭 키 (Symmetric Key)</label>
+                        <input type="text" id="cipher-key" class="key-input" value="">
+                        <button class="execute-btn" id="execute-btn">분석 가동</button>
+                    </div>
+                    <div class="io-box">
+                        <label>암호문 결과물 (Ciphertext)</label>
+                        <textarea id="cipher-text" readonly></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <section class="terminal-section" id="terminal-screen"></section>
+        </main>
+		
+		<footer class="app-footer" role="contentinfo">
+            <div class="app-footer__container">
+                <p class="copyright">&copy; 20619 차현채 : 응용프로그래밍 프로젝트 완성본</p>
+                <div class="footer-meta">
+                    <span>TYPE: CHRONICLE</span>
+                    <span>v1.5.0-full-hanji</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const CryptoData = {
+            des: {
+                id: "des",
+                name: "1. DES (1977)",
+                title: "DES (Data Encryption Standard)",
+                desc: "1970년대 미국 정부(NIST)가 표준으로 채택한 최초의 공인 현대 암호입니다. 데이터를 반으로 쪼개서 좌우를 번갈아가며 뒤섞는 '페이스텔(Feistel) 구조'를 사용합니다. 컴퓨터의 발전으로 키 길이가 너무 짧아져 현재는 안전하지 않습니다.",
+                math: "$$L_i = R_{i-1}, \\quad R_i = L_{i-1} \\oplus f(R_{i-1}, K_i)$$",
+                mathExplanation: "<strong>[초간단 수식 해석]</strong><br>데이터를 왼쪽($L$)과 오른쪽($R$)으로 반 나눕니다. 오른쪽 데이터와 라운드 키($K_i$)를 복잡한 함수($f$)에 넣어 뒤섞은 뒤, 그 결과를 왼쪽 데이터와 XOR($\\oplus$) 연산합니다. 이 과정을 16번 반복합니다. <strong>마치 종이를 반으로 접어 한쪽에만 잉크를 바르고 교차해서 문지르는 것</strong>과 같은 정교한 대칭 구조입니다.",
+                inputType: "text",
+                defaultKey: "KEY_56BT",
+                keyLabel: "56비트 대칭키",
+                plainLabel: "암호화할 평문",
+                encrypt: (text, key) => {
+                    let hash = 0;
+                    for (let i = 0; i < text.length; i++) hash = Math.imul(23, hash) + text.charCodeAt(i) | 0;
+                    return `[DES-56 Block Cipher Output]\n0x${Math.abs(hash).toString(16).padEnd(16, 'A')}`;
+                },
+                logs: [
+                    { type: 'info', text: "[시스템] 전송 중인 DES 패킷 낚아채기 성공." },
+                    { type: 'process', text: "[분석] 데이터 블록 크기: 64-bit, 사용된 키 힌트: {key}." },
+                    { type: 'info', text: "[공격] 무차별 대입 공격(Brute-force) 하드웨어 가동. 전체 경우의 수 $2^{56}$개." },
+                    { type: 'process', text: "[진행] 초당 1,000억 개의 키 대조 연산 처리 중..." },
+                    { type: 'result', text: "[성공] 56비트 취약키 크랙 완료! 원래 평문 '{plain}' 복원 성공." },
+                    { type: 'error', text: "[경고] DES는 현대 컴퓨팅 환경에서 몇 시간 만에 뚫리므로 사용을 금지해야 합니다." }
+                ]
+            },
+            triple_des: {
+                id: "triple_des",
+                name: "2. 3DES (개량형)",
+                title: "Triple DES (3DES)",
+                desc: "DES의 키 길이가 짧아 쉽게 뚫리는 문제를 임시로 때우기 위해 등장했습니다. 새로운 암호를 만들기엔 시간이 부족해, 기존 DES를 연속으로 3번 통과시키는 방식을 고안했습니다. 속도는 3배 느려졌지만 보안성은 크게 올라가 금융권에서 오래 쓰였습니다.",
+                math: "$$C = E_{K3}(D_{K2}(E_{K1}(P)))$$",
+                mathExplanation: "<strong>[초간단 수식 해석]</strong><br>평문($P$)을 첫 번째 키로 암호화($E$)하고, 두 번째 키로 복호화($D$)를 한 번 수행한 뒤, 다시 세 번째 키로 암호화($E$)를 진행합니다. <strong>자물쇠 세 개를 연달아 걸어 잠그는 방식</strong>입니다. 중간에 복호화($D$)를 넣은 이유는 키 3개를 모두 똑같이 맞추면 과거 구형 DES 시스템과도 호환되도록 만든 똑똑한 설계 원리입니다.",
+                inputType: "text",
+                defaultKey: "K1_K2_K3_KEY",
+                keyLabel: "168비트 조합키",
+                plainLabel: "금융 거래 데이터",
+                encrypt: (text, key) => {
+                    let hash = 0;
+                    for (let i = 0; i < text.length; i++) hash = Math.imul(41, hash) + text.charCodeAt(i) | 0;
+                    return `[3DES-168 Triple Block Output]\n0x${Math.abs(hash).toString(16).toUpperCase().padStart(16, '7')}`;
+                },
+                logs: [
+                    { type: 'info', text: "[시스템] 3DES 암호화 통신 스트림 동기화 완료." },
+                    { type: 'process', text: "[분석] 키 조합 '{key}' 에 대한 역산 매핑 시도." },
+                    { type: 'info', text: "[공격] 만남 중간 공격(Meet-in-the-middle Attack) 모델 적용." },
+                    { type: 'process', text: "[진행] 메모리 테이블에 $2^{112}$개의 중간 매칭 데이터 로드 중..." },
+                    { type: 'error', text: "[오류] 메모리 오버플로우 및 연산 한계 직면. 현대 슈퍼컴퓨터로 해독 불가능." },
+                    { type: 'result', text: "[방어 성공] 평문 '{plain}' 안전하게 보호됨. 단, 연산 속도 저하 현상 관찰됨." }
+                ]
+            },
+            aes: {
+                id: "aes",
+                name: "3. AES (현대 표준)",
+                title: "AES (Advanced Encryption Standard)",
+                desc: "2001년 미국 정부가 공모전을 거쳐 선정한 인류 역사상 가장 완벽에 가까운 현대 대칭키 암호 표준입니다. 데이터를 격자판(행렬)에 배치한 뒤, 행을 밀고 열을 섞는 'SPN 구조'를 사용합니다. 현재 스마트폰, 와이파이, 군사 통신 등 거의 모든 곳에 기본 탑재되어 있습니다.",
+                math: "$$\\text{State} = \\text{MixColumns}(\\text{ShiftRows}(\\text{SubBytes}(\\text{State})))$$",
+                mathExplanation: "<strong>[초간단 수식 해석]</strong><br>데이터 행렬을 바이트 단위로 갈아끼우고(\\text{SubBytes}), 가로줄을 옆으로 밀고(\\text{ShiftRows}), 세로줄을 수학적으로 결합해 마구 섞어버립니다(\\text{MixColumns}). <strong>루빅스 큐브를 수십 번 완벽하게 돌려 섞는 형태</strong>입니다. 대칭키 256비트 기준, 우주에 있는 모든 원자를 컴퓨터로 만들어 우주 수명이 다할 때까지 찍어 맞춰도 비밀키를 알아낼 수 없습니다.",
+                inputType: "text",
+                defaultKey: "AES_256_SECRET",
+                keyLabel: "AES-256 대칭키",
+                plainLabel: "최고 기밀 데이터",
+                encrypt: (text, key) => {
+                    let hash = 0;
+                    for (let i = 0; i < text.length; i++) hash = Math.imul(97, hash) + text.charCodeAt(i) | 0;
+                    return `[AES-256 Top-Secret Cipher]\nCipher: 0x${Math.abs(hash).toString(16).toUpperCase().padEnd(32, 'F')}`;
+                },
+                logs: [
+                    { type: 'info', text: "[시스템] 전 세계 표준 AES-256 가동 확인." },
+                    { type: 'process', text: "[분석] 평문 '{plain}', 대칭키 '{key}' 투입 데이터 트래킹." },
+                    { type: 'info', text: "[공격] 수학적 해독법(선형/차분 해독) 및 대입 공격 동시 가동." },
+                    { type: 'process', text: "[진행] 14라운드 전체 확산성(Diffusion) 무결점 상태 확인." },
+                    { type: 'error', text: "[오류] 우주적 복잡도 ($2^{256}$)로 인해 알고리즘 자체를 뚫는 것은 원천 불가능." },
+                    { type: 'result', text: "[방어 성공] 완벽 방어. 키 '{key}'를 실물이 든 서버 통째로 해킹하지 않는 한 안전함." }
+                ]
+            }
+        };
+
+        const DOM = {
+            sidebar: document.getElementById('sidebar'),
+            title: document.getElementById('theory-title'),
+            desc: document.getElementById('theory-desc'),
+            math: document.getElementById('math-container'),
+            mathExp: document.getElementById('math-explanation'),
+            plainLabel: document.getElementById('plain-label'),
+            plainInput: document.getElementById('plain-text'),
+            cipherOutput: document.getElementById('cipher-text'),
+            keyLabel: document.getElementById('key-label'),
+            keyInput: document.getElementById('cipher-key'),
+            execBtn: document.getElementById('execute-btn'),
+            terminal: document.getElementById('terminal-screen')
+        };
+
+        let currentCipherId = Object.keys(CryptoData)[0];
+        let isTyping = false;
+
+        function init() {
+            Object.values(CryptoData).forEach(cipher => {
+                const btn = document.createElement('button');
+                btn.className = `cipher-tab ${cipher.id === currentCipherId ? 'active' : ''}`;
+                btn.textContent = cipher.name;
+                btn.onclick = () => loadCipher(cipher.id);
+                DOM.sidebar.appendChild(btn);
+            });
+
+            loadCipher(currentCipherId);
+            DOM.plainInput.addEventListener('input', runEncryption);
+            DOM.keyInput.addEventListener('input', runEncryption);
+            DOM.execBtn.addEventListener('click', triggerTerminalEvent);
+        }
+
+        function loadCipher(id) {
+            currentCipherId = id;
+            const data = CryptoData[id];
+
+            document.querySelectorAll('.cipher-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.includes(data.name));
+            });
+
+            DOM.title.textContent = data.title;
+            DOM.desc.innerHTML = data.desc;
+            DOM.math.innerHTML = data.math;
+            DOM.mathExp.innerHTML = data.mathExplanation; 
+            
+            const katexOptions = {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ]
+            };
+            renderMathInElement(DOM.math, katexOptions);
+            renderMathInElement(DOM.mathExp, katexOptions);
+
+            DOM.keyLabel.textContent = data.keyLabel;
+            DOM.keyInput.type = data.inputType;
+            DOM.keyInput.value = data.defaultKey;
+            
+            DOM.plainLabel.textContent = data.plainLabel;
+            if(id === "des") DOM.plainInput.value = "ATTACK AT DAWN";
+            else if(id === "triple_des") DOM.plainInput.value = "ACCOUNT_BALANCE: 50000"; 
+            else DOM.plainInput.value = "TOP_SECRET_MILITARY_PLAN";
+            
+            runEncryption();
+            DOM.terminal.innerHTML = `<span class="terminal-cursor"></span>`;
+        }
+
+        function runEncryption() {
+            const data = CryptoData[currentCipherId];
+            DOM.cipherOutput.value = data.encrypt(DOM.plainInput.value, DOM.keyInput.value);
+        }
+
+        async function triggerTerminalEvent() {
+            if (isTyping) return;
+            isTyping = true;
+            DOM.terminal.innerHTML = ""; 
+            
+            const logs = CryptoData[currentCipherId].logs;
+            const currentPlain = DOM.plainInput.value.substring(0, 15) + (DOM.plainInput.value.length > 15 ? "..." : "");
+            const currentKey = DOM.keyInput.value;
+
+            for (let i = 0; i < logs.length; i++) {
+                let dynamicText = logs[i].text
+                    .replace(/{plain}/g, currentPlain || "빈 문자")
+                    .replace(/{key}/g, currentKey || "없음");
+
+                await typeText(dynamicText, `log-${logs[i].type}`);
+                await sleep(300); 
+            }
+
+            DOM.terminal.innerHTML += `<span class="terminal-cursor"></span>`;
+            isTyping = false;
+        }
+
+        function typeText(text, className) {
+            return new Promise(resolve => {
+                const lineDiv = document.createElement('div');
+                lineDiv.className = `terminal-line ${className}`;
+                DOM.terminal.appendChild(lineDiv);
+                
+                let charIndex = 0;
+                
+                function type() {
+                    if (charIndex < text.length) {
+                        lineDiv.textContent += text.charAt(charIndex);
+                        charIndex++;
+                        DOM.terminal.scrollTop = DOM.terminal.scrollHeight; 
+
+                        let speed = Math.random() * 40 + 10;
+                        if (Math.random() < 0.03) speed += 150;
+
+                        setTimeout(type, speed); 
+                    } else {
+                        resolve();
+                    }
+                }
+                type(); 
+            });
+        }
+
+        function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ko" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Lab - [05] 해시 함수와 일방향성</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Poppins:wght@400;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        :root {
+            --color-hanji-bg: #f4edd9;
+            --color-hanji-card: #fbf9f3;
+            --color-ink-black: #1a1917;
+            --color-ink-muted: #595349;
+            --color-royal-red: #8a2411;
+            --color-border: #e2d6be;
+            
+            --terminal-bg: #0a0a0a;
+            --terminal-green: #4af626;
+            --terminal-yellow: #f5d142;
+            --terminal-red: #ff3333;
+            --terminal-text: #cccccc;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--color-hanji-bg);
+            color: var(--color-ink-black);
+            font-family: 'Gowun Batang', serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-image: 
+                linear-gradient(to right, rgba(26,25,23,0.015) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(26,25,23,0.015) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+
+        header {
+            padding: 20px 40px;
+            border-bottom: 2px solid var(--color-ink-black);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .back-btn {
+            background: none; border: 1px solid var(--color-ink-black);
+            padding: 8px 16px; font-family: 'Poppins', serif; font-weight: 600;
+            cursor: pointer; color: var(--color-ink-black);
+            transition: all 0.3s ease;
+        }
+        .back-btn:hover { background-color: var(--color-ink-black); color: var(--color-hanji-bg); }
+        .header-title { font-size: 1.5rem; font-weight: 700; }
+
+        .workspace {
+            display: flex; flex: 1; height: calc(100vh - 75px); overflow: hidden;
+        }
+
+        .sidebar {
+            width: 280px; border-right: 1px solid var(--color-border);
+            padding: 30px 20px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto;
+        }
+        .cipher-tab {
+            width: 100%; text-align: left; padding: 16px;
+            background: transparent; border: 1px solid var(--color-border);
+            font-family: 'Gowun Batang', serif; font-size: 1.1rem; font-weight: 700;
+            color: var(--color-ink-muted); cursor: pointer; transition: all 0.3s ease; border-radius: 8px;
+        }
+        .cipher-tab:hover { border-color: var(--color-ink-black); color: var(--color-ink-black); }
+        .cipher-tab.active { background-color: var(--color-ink-black); color: var(--color-hanji-bg); border-color: var(--color-ink-black); }
+
+        .main-canvas {
+            flex: 1; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; gap: 30px;
+        }
+
+        .theory-section {
+            background: var(--color-hanji-card); border: 1px solid var(--color-border);
+            padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        }
+        .theory-section h2 { font-size: 2rem; margin-bottom: 16px; color: var(--color-ink-black); }
+        .theory-section p { font-size: 1.1rem; line-height: 1.6; color: var(--color-ink-muted); margin-bottom: 24px; word-break: keep-all; }
+        .math-box {
+            background: rgba(26, 25, 23, 0.03); border-left: 4px solid var(--color-royal-red);
+            padding: 20px; font-size: 1.5rem; text-align: center; overflow-x: auto; margin-bottom: 16px;
+        }
+        .math-explanation {
+            background: transparent; border: 1px dashed var(--color-border);
+            padding: 20px; font-size: 1rem; color: var(--color-ink-black);
+            line-height: 1.6; border-radius: 6px; font-family: 'Gowun Batang', serif;
+        }
+        .math-explanation strong { color: var(--color-royal-red); }
+
+        .sandbox-section {
+            background: var(--color-hanji-card); border: 1px solid var(--color-border);
+            padding: 30px; border-radius: 12px;
+        }
+        .sandbox-header { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; }
+        .io-container { display: flex; gap: 20px; align-items: stretch; }
+        .io-box { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+        .io-box label { font-family: 'Poppins', sans-serif; font-size: 0.85rem; font-weight: 600; }
+        .io-box textarea {
+            width: 100%; height: 120px; padding: 16px; resize: none;
+            background: var(--color-hanji-bg); border: 1px solid var(--color-ink-black);
+            font-family: 'Fira Code', monospace; font-size: 1rem; color: var(--color-ink-black); outline: none; border-radius: 4px;
+        }
+        .controls { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; padding: 0 20px; }
+        .key-input { width: 140px; padding: 10px; text-align: center; border: 1px solid var(--color-ink-black); background: transparent; font-family: 'Fira Code'; font-size: 1rem; }
+        .execute-btn {
+            background: var(--color-ink-black); color: var(--color-hanji-bg); border: none;
+            padding: 12px 24px; font-weight: 700; cursor: pointer; border-radius: 4px; font-family: 'Gowun Batang', serif; font-size: 1.1rem;
+            transition: background 0.3s ease;
+        }
+        .execute-btn:hover { background: var(--color-royal-red); }
+
+        .terminal-section {
+            background: var(--terminal-bg); border: 2px solid var(--color-ink-black);
+            border-radius: 8px; padding: 20px; height: 250px; overflow-y: auto;
+            font-family: 'Fira Code', monospace; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        }
+        .terminal-line { margin-bottom: 8px; line-height: 1.5; font-size: 0.95rem; }
+        .log-info { color: var(--terminal-text); }
+        .log-process { color: var(--terminal-yellow); }
+        .log-result { color: var(--terminal-green); }
+        .log-error { color: var(--terminal-red); }
+        .terminal-cursor { display: inline-block; width: 8px; height: 15px; background: var(--terminal-green); animation: blink 1s step-end infinite; }
+		
+		
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <button class="back-btn" onclick="history.back()">← 메인 대시보드로 복귀</button>
+        <div class="header-title">[05] 해시 함수와 일방향성 (1990~현재)</div>
+        <div style="width: 150px;"></div> 
+    </header>
+
+    <div class="workspace">
+        <nav class="sidebar" id="sidebar"></nav>
+
+        <main class="main-canvas" id="main-canvas">
+            
+            <section class="theory-section">
+                <h2 id="theory-title">로딩 중...</h2>
+                <p id="theory-desc"></p>
+                <div class="math-box" id="math-container"></div>
+                <div class="math-explanation" id="math-explanation"></div>
+            </section>
+
+            <section class="sandbox-section">
+                <div class="sandbox-header">일방향 해시 시뮬레이터</div>
+                <div class="io-container">
+                    <div class="io-box">
+                        <label id="plain-label">입력 데이터 (Input)</label>
+                        <textarea id="plain-text" placeholder="데이터를 입력하세요..."></textarea>
+                    </div>
+                    <div class="controls">
+                        <label id="key-label">솔트 / 반복 횟수</label>
+                        <input type="text" id="cipher-key" class="key-input" value="">
+                        <button class="execute-btn" id="execute-btn">해시 생성</button>
+                    </div>
+                    <div class="io-box">
+                        <label>해시 고정 출력값 (Hash Digest)</label>
+                        <textarea id="cipher-text" readonly></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <section class="terminal-section" id="terminal-screen"></section>
+        </main>
+		
+		<footer class="app-footer" role="contentinfo">
+            <div class="app-footer__container">
+                <p class="copyright">&copy; 20619 차현채 : 응용프로그래밍 프로젝트 완성본</p>
+                <div class="footer-meta">
+                    <span>TYPE: CHRONICLE</span>
+                    <span>v1.5.0-full-hanji</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const CryptoData = {
+            sha256: {
+                id: "sha256",
+                name: "1. SHA-256 (블록체인)",
+                title: "SHA-256 (Secure Hash Algorithm)",
+                desc: "어떠한 무거운 데이터나 책 한 권을 집어넣어도 정확히 256비트(64글자의 16진수)의 고정된 요약본으로 갈아버리는 알고리즘입니다. 입력 데이터가 단 1글자만 달라져도 완전히 다른 결과값이 나오는 '눈사태 효과'가 특징이며 블록체인의 무결성을 지키는 기둥입니다.",
+                math: "$$H = \\text{SHA-256}(M) \\quad \\text{where } |H| = 256\\text{ bits}$$",
+                mathExplanation: "<strong>[초간단 수식 해석]</strong><br>메시지($M$)를 집어넣으면 가차 없이 쪼개고 비트 연산을 적용해 요약본($H$)을 뽑아냅니다. <strong>소고기를 기계에 갈아서 다짐육을 만드는 과정</strong>과 같습니다. 다짐육을 보고 원래 소의 형태를 복원할 수 없듯이, 해시값 $H$만 보고 원문 $M$을 알아내는 수학적 역산은 불가능합니다.",
+                inputType: "text",
+                defaultKey: "No_Salt",
+                keyLabel: "추가 소금(Salt) 값",
+                plainLabel: "해싱할 원문 데이터",
+                encrypt: (text, key) => {
+                    let hash = 0;
+                    const salt = key === "No_Salt" ? "" : key;
+                    for (let i = 0; i < (text + salt).length; i++) hash = Math.imul(63, hash) + (text + salt).charCodeAt(i) | 0;
+                    return Math.abs(hash).toString(16).padEnd(8, 'e') + "a8f3c2d1b5a67e8f9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b";
+                },
+                logs: [
+                    { type: 'info', text: "[시스템] 입력값 '{plain}'에 대한 SHA-256 고정 크기 압축 가동." },
+                    { type: 'process', text: "[분석] 메시지 스케줄링 패딩 및 64라운드 논리 연산 돌입." },
+                    { type: 'info', text: "[공격] 해커가 결과 데이터 탈취 후 레인보우 테이블(역산 사전) 대조 수행." },
+                    { type: 'error', text: "[오류] 256비트 공간의 광대함으로 인해 역산 테이블에 매칭 데이터 없음." },
+                    { type: 'result', text: "[방어 성공] 일방향성(One-way) 유지. 해시값만으로 원문 복원 완벽 차단." }
+                ]
+            },
+            md5: {
+                id: "md5",
+                name: "2. MD5 (취약한 해시)",
+                title: "MD5 (Message Digest 5)",
+                desc: "1991년 개발되어 과거 파일 무결성 검사 및 웹사이트 비밀번호 저장에 폭넓게 쓰였던 해시 함수입니다. 연산 속도가 엄청나게 빠르지만, 치명적인 설계 결함으로 인해 서로 다른 데이터를 넣어도 똑같은 해시값이 나와버리는 '해시 충돌' 현상이 발견되어 현재는 폐기되었습니다.",
+                math: "$$\\text{Find } M \\neq M' \\quad \\text{such that } H(M) = H(M')$$",
+                mathExplanation: "<strong>[초간단 수식 해석]</strong><br>서로 다른 두 메시지($M, M'$)의 해시 결과물이 같아지는 상태를 찾을 수 있다는 뜻입니다. <strong>주민등록번호가 다른 두 사람의 지문이 똑같은 초유의 사태</strong>가 벌어진 것입니다. 해커가 악성코드 파일의 해시값을 정상 파일인 것처럼 속여서 백신을 무력화할 수 있게 됩니다.",
+                inputType: "text",
+                defaultKey: "No_Salt",
+                keyLabel: "추가 소금(Salt) 값",
+                plainLabel: "취약한 데이터 입력",
+                encrypt: (text, key) => {
+                    let hash = 0;
+                    for (let i = 0; i < text.length; i++) hash = Math.imul(17, hash) + text.charCodeAt(i) | 0;
+                    return Math.abs(hash).toString(16).padStart(32, '0');
+                },
+                logs: [
+                    { type: 'info', text: "[시스템] MD5 스트림 분석 시작. 타겟 데이터: '{plain}'." },
+                    { type: 'process', text: "[분석] 짧은 해시 비트 공간(128-bit) 구조 확인." },
+                    { type: 'info', text: "[공격] 고속 충돌 공격 알고리즘(Collision Attack) 실행." },
+                    { type: 'process', text: "[진행] 몇 초 만에 동일한 MD5 값을 갖는 가짜 변조 데이터 블록 생성 완료." },
+                    { type: 'result', text: "[성공/위험] 해시 충돌 발생! 위조 데이터 패킷 통과 성공." },
+                    { type: 'error', text: "[경고] MD5는 더 이상 무결성을 보장하지 못합니다. 당장 SHA-256 이상으로 전면 교체하십시오." }
+                ]
+            },
+            pbkdf2: {
+                id: "pbkdf2",
+                name: "3. 비밀번호 보호 (KDF)",
+                title: "PBKDF2 / Bcrypt (비밀번호 전용)",
+                desc: "SHA-256 같은 일반 해시는 컴퓨터 연산이 너무 빨라 해커가 무차별로 때려 맞추기 쉽습니다. 이를 방지하기 위해 사용자의 비밀번호에 임의의 난수 덩어리(Salt)를 치고, 수천 번에서 수만 번 반복해서 해싱(Key Stretching)하도록 설계된 안전한 비밀번호 전용 저장 기술입니다.",
+                math: "$$DK = \\text{PBKDF2}(\\text{PRF}, \\text{Password}, \\text{Salt}, c, \\text{dkLen})$$",
+                mathExplanation: "<strong>[초간단 수식 해석]</strong><br>비밀번호와 소금($Salt$)을 섞은 뒤 반복 횟수($c$)만큼 해시를 수만 번 연속으로 돌려 최종 키($DK$)를 냅니다. <strong>도둑이 비밀번호를 한 번 찍어 맞출 때마다 자물쇠가 수만 번 공회전하게 만드는 방식</strong>입니다. 연산 속도를 의도적으로 늦춰 해커의 무차별 대입 장비를 과열시키고 무력화합니다.",
+                inputType: "number",
+                defaultKey: "10000",
+                keyLabel: "반복 횟수 (c)",
+                plainLabel: "유저 비밀번호 (Password)",
+                encrypt: (text, key) => {
+                    return `$bcrypt$v1$iter$${key || 10000}$2b$12$R9ZcYUjBvK... (정밀 스트레칭 완료)`;
+                },
+                logs: [
+                    { type: 'info', text: "[시스템] 유저 패스워드 데이터 '{plain}' 해싱 진입." },
+                    { type: 'process', text: "[분석] 설정된 키 스트레칭 횟수: {key}회 작동." },
+                    { type: 'info', text: "[공격] 해커가 고성능 병렬 GPU 클러스터를 동원해 패스워드 크래킹 시도." },
+                    { type: 'process', text: "[진행] 루프 연산 강제로 인한 GPU 연산 병목 현상 발생..." },
+                    { type: 'error', text: "[오류] 1개 암호 대조에 너무 많은 시간 소요. 무차별 대입 공격 전면 포기." },
+                    { type: 'result', text: "[방어 성공] 비밀번호 안전 보장. 데이터베이스가 털려도 원문 유출 원천 차단." }
+                ]
+            }
+        };
+
+        const DOM = {
+            sidebar: document.getElementById('sidebar'),
+            title: document.getElementById('theory-title'),
+            desc: document.getElementById('theory-desc'),
+            math: document.getElementById('math-container'),
+            mathExp: document.getElementById('math-explanation'),
+            plainLabel: document.getElementById('plain-label'),
+            plainInput: document.getElementById('plain-text'),
+            cipherOutput: document.getElementById('cipher-text'),
+            keyLabel: document.getElementById('key-label'),
+            keyInput: document.getElementById('cipher-key'),
+            execBtn: document.getElementById('execute-btn'),
+            terminal: document.getElementById('terminal-screen')
+        };
+
+        let currentCipherId = Object.keys(CryptoData)[0];
+        let isTyping = false;
+
+        function init() {
+            Object.values(CryptoData).forEach(cipher => {
+                const btn = document.createElement('button');
+                btn.className = `cipher-tab ${cipher.id === currentCipherId ? 'active' : ''}`;
+                btn.textContent = cipher.name;
+                btn.onclick = () => loadCipher(cipher.id);
+                DOM.sidebar.appendChild(btn);
+            });
+
+            loadCipher(currentCipherId);
+            DOM.plainInput.addEventListener('input', runEncryption);
+            DOM.keyInput.addEventListener('input', runEncryption);
+            DOM.execBtn.addEventListener('click', triggerTerminalEvent);
+        }
+
+        function loadCipher(id) {
+            currentCipherId = id;
+            const data = CryptoData[id];
+
+            document.querySelectorAll('.cipher-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.includes(data.name));
+            });
+
+            DOM.title.textContent = data.title;
+            DOM.desc.innerHTML = data.desc;
+            DOM.math.innerHTML = data.math;
+            DOM.mathExp.innerHTML = data.mathExplanation; 
+            
+            const katexOptions = {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ]
+            };
+            renderMathInElement(DOM.math, katexOptions);
+            renderMathInElement(DOM.mathExp, katexOptions);
+
+            DOM.keyLabel.textContent = data.keyLabel;
+            DOM.keyInput.type = data.inputType;
+            DOM.keyInput.value = data.defaultKey;
+            
+            DOM.plainLabel.textContent = data.plainLabel;
+            if(id === "sha256") DOM.plainInput.value = "Blockchain_Transaction_Data";
+            else if(id === "md5") DOM.plainInput.value = "Normal_System_File_Content"; 
+            else DOM.plainInput.value = "my_secret_password123!";
+            
+            runEncryption();
+            DOM.terminal.innerHTML = `<span class="terminal-cursor"></span>`;
+        }
+
+        function runEncryption() {
+            const data = CryptoData[currentCipherId];
+            DOM.cipherOutput.value = data.encrypt(DOM.plainInput.value, DOM.keyInput.value);
+        }
+
+        async function triggerTerminalEvent() {
+            if (isTyping) return;
+            isTyping = true;
+            DOM.terminal.innerHTML = ""; 
+            
+            const logs = CryptoData[currentCipherId].logs;
+            const currentPlain = DOM.plainInput.value.substring(0, 15) + (DOM.plainInput.value.length > 15 ? "..." : "");
+            const currentKey = DOM.keyInput.value;
+
+            for (let i = 0; i < logs.length; i++) {
+                let dynamicText = logs[i].text
+                    .replace(/{plain}/g, currentPlain || "빈 문자")
+                    .replace(/{key}/g, currentKey || "없음");
+
+                await typeText(dynamicText, `log-${logs[i].type}`);
+                await sleep(300); 
+            }
+
+            DOM.terminal.innerHTML += `<span class="terminal-cursor"></span>`;
+            isTyping = false;
+        }
+
+        function typeText(text, className) {
+            return new Promise(resolve => {
+                const lineDiv = document.createElement('div');
+                lineDiv.className = `terminal-line ${className}`;
+                DOM.terminal.appendChild(lineDiv);
+                
+                let charIndex = 0;
+                
+                function type() {
+                    if (charIndex < text.length) {
+                        lineDiv.textContent += text.charAt(charIndex);
+                        charIndex++;
+                        DOM.terminal.scrollTop = DOM.terminal.scrollHeight; 
+
+                        let speed = Math.random() * 40 + 10;
+                        if (Math.random() < 0.03) speed += 150;
+
+                        setTimeout(type, speed); 
+                    } else {
+                        resolve();
+                    }
+                }
+                type(); 
+            });
+        }
+
+        function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

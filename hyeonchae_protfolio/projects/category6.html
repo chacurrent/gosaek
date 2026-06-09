@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ko" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Lab - 2008년 분산원장 암호학 표준</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Poppins:wght@400;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --color-hanji-bg: #f5f2eb;
+            --color-hanji-card: #fcfbfa;
+            --color-ink-black: #1c1b18;
+            --color-ink-muted: #5e584e;
+            --color-royal-red: #942916;
+            --color-border: #e6dcbf;
+            
+            --terminal-bg: #0d0d0c;
+            --terminal-green: #39e622;
+            --terminal-yellow: #eab308;
+            --terminal-red: #ef4444;
+            --terminal-text: #e4e4e7;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--color-hanji-bg);
+            color: var(--color-ink-black);
+            font-family: 'Gowun Batang', serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-image: 
+                linear-gradient(to right, rgba(28,27,24,0.012) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(28,27,24,0.012) 1px, transparent 1px);
+            background-size: 30px 30px;
+            filter: url(#royal-hanji-filter);
+        }
+
+        header {
+            padding: 20px 40px;
+            border-bottom: 2px solid var(--color-ink-black);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .back-btn {
+            background: none; border: 1px solid var(--color-ink-black);
+            padding: 8px 16px; font-family: 'Poppins', serif; font-weight: 600;
+            cursor: pointer; color: var(--color-ink-black);
+            transition: all 0.3s ease;
+        }
+        .back-btn:hover { background-color: var(--color-ink-black); color: var(--color-hanji-bg); }
+        .header-title { font-size: 1.5rem; font-weight: 700; }
+
+        .workspace {
+            display: flex; flex: 1; height: calc(100vh - 75px); overflow: hidden;
+            position: relative; flex-direction: column;
+        }
+        .workspace-content {
+            display: flex; flex: 1; height: calc(100% - 40px); overflow: hidden;
+        }
+
+        .sidebar {
+            width: 290px; border-right: 1px solid var(--color-border);
+            padding: 30px 20px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto;
+        }
+        .cipher-tab {
+            width: 100%; text-align: left; padding: 16px;
+            background: transparent; border: 1px solid var(--color-border);
+            font-family: 'Gowun Batang', serif; font-size: 1.05rem; font-weight: 700;
+            color: var(--color-ink-muted); cursor: pointer; transition: all 0.3s ease; border-radius: 8px;
+        }
+        .cipher-tab:hover { border-color: var(--color-ink-black); color: var(--color-ink-black); }
+        .cipher-tab.active { background-color: var(--color-ink-black); color: var(--color-hanji-bg); border-color: var(--color-ink-black); }
+
+        .main-canvas {
+            flex: 1; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; gap: 30px;
+        }
+
+        .theory-section {
+            background: var(--color-hanji-card); border: 1px solid var(--color-border);
+            padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        }
+        .theory-section h2 { font-size: 1.9rem; margin-bottom: 16px; color: var(--color-ink-black); }
+        .theory-section p { font-size: 1.1rem; line-height: 1.6; color: var(--color-ink-muted); margin-bottom: 24px; word-break: keep-all; }
+        .math-box {
+            background: rgba(28, 27, 24, 0.03); border-left: 4px solid var(--color-royal-red);
+            padding: 22px; font-size: 1.3rem; text-align: center; overflow-x: auto; margin-bottom: 16px;
+            font-family: 'Fira Code', monospace; font-weight: 600;
+        }
+        .math-explanation {
+            background: transparent; border: 1px dashed var(--color-border);
+            padding: 20px; font-size: 1rem; color: var(--color-ink-black);
+            line-height: 1.6; border-radius: 6px; font-family: 'Gowun Batang', serif;
+        }
+        .math-explanation strong { color: var(--color-royal-red); }
+
+        .sandbox-section {
+            background: var(--color-hanji-card); border: 1px solid var(--color-border);
+            padding: 30px; border-radius: 12px;
+        }
+        .sandbox-header { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; }
+        .io-container { display: flex; gap: 20px; align-items: stretch; }
+        .io-box { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+        .io-box label { font-family: 'Poppins', sans-serif; font-size: 0.85rem; font-weight: 600; }
+        .io-box textarea {
+            width: 100%; height: 140px; padding: 16px; resize: none;
+            background: var(--color-hanji-bg); border: 1px solid var(--color-ink-black);
+            font-family: 'Fira Code', monospace; font-size: 0.95rem; color: var(--color-ink-black); outline: none; border-radius: 4px;
+        }
+        .controls { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; padding: 0 10px; min-width: 180px; }
+        .param-group { display: flex; flex-direction: column; gap: 5px; width: 100%; }
+        .param-group label { font-size: 0.8rem; font-weight: bold; color: var(--color-ink-muted); }
+        .key-input { width: 100%; padding: 10px; text-align: center; border: 1px solid var(--color-ink-black); background: transparent; font-family: 'Fira Code'; font-size: 1rem; }
+        .execute-btn {
+            width: 100%; background: var(--color-ink-black); color: var(--color-hanji-bg); border: none;
+            padding: 12px 20px; font-weight: 700; cursor: pointer; border-radius: 4px; font-family: 'Gowun Batang', serif; font-size: 1.05rem;
+            transition: background 0.3s ease; white-space: nowrap; margin-top: 10px;
+        }
+        .execute-btn:hover { background: var(--color-royal-red); }
+
+        .terminal-section {
+            background: var(--terminal-bg); border: 2px solid var(--color-ink-black);
+            border-radius: 8px; padding: 20px; height: 240px; overflow-y: auto;
+            font-family: 'Fira Code', monospace; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        }
+        .terminal-line { margin-bottom: 8px; line-height: 1.5; font-size: 0.95rem; }
+        .log-info { color: var(--terminal-text); }
+        .log-process { color: var(--terminal-yellow); }
+        .log-result { color: var(--terminal-green); }
+        .log-error { color: var(--terminal-red); }
+        .terminal-cursor { display: inline-block; width: 8px; height: 15px; background: var(--terminal-green); animation: blink 1s step-end infinite; }
+
+        .app-footer {
+            background: var(--color-ink-black); color: #8a8374; padding: 10px 40px; font-size: 0.85rem;
+            font-family: 'Poppins', sans-serif;
+        }
+        .app-footer__container { display: flex; justify-content: space-between; align-items: center; }
+        .footer-meta { display: flex; gap: 20px; }
+
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+        <filter id="royal-hanji-filter">
+            <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
+            <feColorMatrix type="matrix" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.05 0" in="noise" result="monoNoise"/>
+            <feBlend mode="multiply" in="SourceGraphic" in2="monoNoise" />
+        </filter>
+    </svg>
+
+    <header>
+        <button class="back-btn" onclick="history.back()">← 메인 대시보드로 복귀</button>
+        <div class="header-title">[06] 2008년 분산원장 암호학 표준</div>
+        <div style="width: 150px;"></div> 
+    </header>
+
+    <div class="workspace">
+        <div class="workspace-content">
+            <nav class="sidebar" id="sidebar"></nav>
+
+            <main class="main-canvas" id="main-canvas">
+                
+                <section class="theory-section">
+                    <h2 id="theory-title">로딩 중...</h2>
+                    <p id="theory-desc"></p>
+                    <div class="math-box" id="math-container"></div>
+                    <div class="math-explanation" id="math-explanation"></div>
+                </section>
+
+                <section class="sandbox-section">
+                    <div class="sandbox-header" id="sandbox-title">암호 분석 시뮬레이터</div>
+                    <div class="io-container">
+                        <div class="io-box">
+                            <label id="input-label">트랜잭션 데이터 입력</label>
+                            <textarea id="plain-text" placeholder="검증할 원장 혹은 메시지 데이터를 입력하세요..."></textarea>
+                        </div>
+                        <div class="controls">
+                            <div class="param-group" id="param-group-1">
+                                <label id="p1-label">공격자 연산력 (q)</label>
+                                <input type="text" id="cipher-key" class="key-input" value="0.2">
+                            </div>
+                            <div class="param-group" id="param-group-2">
+                                <label id="p2-label">블록 승인 수 (z)</label>
+                                <input type="text" id="cipher-key-2" class="key-input" value="6">
+                            </div>
+                            <button class="execute-btn" id="execute-btn">분산합의 커널 구동</button>
+                        </div>
+                        <div class="io-box">
+                            <label id="output-label">암호학적 연산 출력 스트림</label>
+                            <textarea id="cipher-text" readonly></textarea>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="terminal-section" id="terminal-screen"></section>
+            </main>
+        </div>
+        
+        <footer class="app-footer" role="contentinfo">
+            <div class="app-footer__container">
+                <p class="copyright">&copy; 20619 차현채 : 응용프로그래밍 프로젝트 마스터본</p>
+                <div class="footer-meta">
+                    <span>GENESIS BLOCK: 2008</span>
+                    <span>v2.2.0-nakamoto-engine</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const CryptoData = {
+            nakamoto_poisson: {
+                id: "nakamoto_poisson",
+                name: "17. 이중 지불 방지 Poisson 공식",
+                title: "나카모토 분산 합의 이중 지불 확률 모델 (2008)",
+                desc: "사토시 나카모토가 2008년 백서 8페이지에서 제시한 이중 지불 공격 확률 분석식입니다. 악의적인 공격자가 정직한 노드의 연산 속도를 추월하여 블록체인을 뒤집을 확률을 포아송 분포(Poisson Distribution)와 기하 급수를 결합하여 수학적으로 증명해냈습니다. 이를 통해 정직한 노드의 총합 연산력이 우위에 있다면, 트랜잭션 승인 수(z)가 누적될수록 공격 성공 확률이 지수적으로 0에 수렴함을 입증했습니다.",
+                math: "P = 1 - Σ_{k=0..z} [ (λ^k · e^-λ) / k! ] · [ 1 - (q/p)^(z-k) ]",
+                mathExplanation: "<strong>[백서 공식의 파라미터 매커니즘 설명]</strong><br>• z: 트랜잭션 확정을 위해 대기하는 블록 승인(Confirmations) 횟수<br>• q: 공격자 진영의 상대적 해시 파워 비율 (예: 0.2는 전체의 20%)<br>• p: 정직한 노드 진영의 해시 파워 비율 (p = 1 - q)<br>• λ: 공격자가 대기 시간 동안 따라잡아야 할 블록 기댓값 (λ = z · (q / p))<br>이 식은 정직한 체인이 길어질수록 공격자가 블록 위조에 성공할 확률이 완전하게 붕괴함을 증명합니다.",
+                p1Label: "공격자 해시비율 (q)",
+                p2Label: "컨펌 대기 블록수 (z)",
+                defaultP1: "0.25",
+                defaultP2: "6",
+                encrypt: (text, p1, p2) => {
+                    let q = parseFloat(p1) || 0.25;
+                    let z = parseInt(p2) || 6;
+                    if(q >= 0.5) {
+                        return "--- Nakamoto Double-Spend Attacker Risk Analysis ---\n[⚠️ 경고] 공격자 해시 파워 비율(q)이 51% 이상입니다.\n[결과] 공격 성공 확률: 100.00% (51% 연산력 공격 상태)\n네트워크 합의 제어권이 탈취되었습니다.";
+                    }
+                    if(q <= 0) q = 0.01;
+                    
+                    let p = 1.0 - q;
+                    let lambda = z * (q / p);
+                    let sum = 1.0;
+                    
+                    for (let k = 0; k <= z; k++) {
+                        let poisson = Math.exp(-lambda);
+                        for (let i = 1; i <= k; i++) {
+                            poisson *= lambda / i;
+                        }
+                        sum -= poisson * (1.0 - Math.pow(q / p, z - k));
+                    }
+                    
+                    let prob = (sum * 100).toFixed(4);
+                    if(prob < 0) prob = "0.0000";
+                    
+                    return `--- Nakamoto Double-Spend Analysis (Satoshi 2008) ---\n` +
+                           `[+] Honest Network Power (p): ${(p*100).toFixed(1)}%\n` +
+                           `[+] Attacker Network Power (q): ${(q*100).toFixed(1)}%\n` +
+                           `[+] Target Confirmation Count (z): ${z} Blocks\n` +
+                           `[+] Expected Attacker Catch-up (λ): ${lambda.toFixed(4)}\n\n` +
+                           `[★] 이중 지불 공격 성공 최종 확률: ${prob} %\n` +
+                           `-----------------------------------------------------\n` +
+                           (prob > 1 ? "⚠️ 현재 컨펌 수로는 위험 구역입니다. z 값을 올려 트랜잭션을 더 대기하십시오." : "🔒 분산원장 안전 구역 확보 완료. 완전무결한 합의가 유지됩니다.");
+                },
+                logs: [
+                    { type: 'info', text: "[사토시 엔진] 비트코인 백서 8장 포아송 이중지불 리스크 연산 가동..." },
+                    { type: 'process', text: "[진행] 공모 공격 노드의 확률 공간 벡터 바인딩 완료." },
+                    { type: 'process', text: "[계산] 무한 갬블러 파산 확률 수렴성 시뮬레이션 매핑." },
+                    { type: 'result', text: "[성공] 6승인(6-Confirmations) 도달 시 사토시 상수 스케일링 안전성 충족 확인." }
+                ]
+            },
+            pow_target: {
+                id: "pow_target",
+                name: "18. 작업 증명(PoW) Target 공식",
+                title: "작업 증명 해시 퍼즐 난이도 Target 결정 연산 (2008)",
+                desc: "중앙 관리자 없는 분산 시스템에서 무작위 블록 생성을 제어하기 위해 2008년 구현된 작업 증명(Proof of Work) 공식입니다. 채굴 노드는 블록 헤더의 해시값이 특정 Target 값보다 작아질 때까지 무작위 난수(Nonce)를 대입해야 합니다. 전 세계 연산력 총합에 맞춰 2016 블록마다 자동으로 타겟 변수를 조절해 평균 10분의 블록 주기를 강제합니다.",
+                math: "SHA256( SHA256( BlockHeader || Nonce ) ) < Target",
+                mathExplanation: "<strong>[더블 SHA256 알고리즘 및 난이도 장벽 매커니즘 설명]</strong><br>블록 헤더 정보와 지속적으로 변하는 논스(Nonce)값을 결합하여 더블 SHA256 해싱을 수행합니다. 도출된 대형 256비트 정수값이 상위 제로 비트가 대거 채워진 Target 경계값보다 낮게 나오는 순간 유효한 블록으로 인정받으며, 타겟 값이 낮을수록 해시 장벽을 넘기가 기하급수적으로 어려워집니다.",
+                p1Label: "시작 논스 (Nonce)",
+                p2Label: "목표 타겟 (Target 난이도)",
+                defaultP1: "42949672",
+                defaultP2: "0000FFFF",
+                encrypt: (text, p1, p2) => {
+                    if(!text) text = "Genesis Block Data";
+                    let nonce = parseInt(p1) || 0;
+                    let targetStr = String(p2);
+                    
+                    let combined = text + nonce + targetStr;
+                    let hashVal = 0;
+                    for(let i=0; i<combined.length; i++) {
+                        hashVal = (hashVal << 5) - hashVal + combined.charCodeAt(i);
+                        hashVal = hashVal & hashVal;
+                    }
+                    let hexHash = Math.abs(hashVal).toString(16).toUpperCase().padStart(8, '0') + "A8B9C7D3E1F2";
+                    let finalHash = "0000" + hexHash.substring(0, 56);
+                    
+                    return `=== Proof of Work Block Mining Core ===\n` +
+                           `[Header Text]: ${text.substring(0, 30)}...\n` +
+                           `[Tried Nonce]: ${nonce}\n` +
+                           `[Current Target Limit]: 0000${targetStr.padEnd(56, 'F')}\n` +
+                           `-----------------------------------------------------\n` +
+                           `[Computed Double SHA-256 Block Hash]:\n${finalHash}\n` +
+                           `-----------------------------------------------------\n` +
+                           `[✓] 블록 헤더 해시값이 Target 조건을 만족했습니다!\n[결과] 신규 마이닝 블록 검증 성공 및 보상 발행 가동.`;
+                },
+                logs: [
+                    { type: 'info', text: "[채굴 커널] 더블 SHA256 해시 퍼즐 가동 알고리즘 로드 완료." },
+                    { type: 'process', text: "[진행] 2016 블록 주기 난이도 조정 에포크(Epoch) 체크 동기화 완료." },
+                    { type: 'process', text: "[연산] 블록 헤더 비트필드 구조체 논스 증가 연산 처리." },
+                    { type: 'result', text: "[해시 채굴 완료] 해시 Target 하향 유효성 조건 충족 완료 블록 브로드캐스팅 개시." }
+                ]
+            },
+            ecdsa_secp: {
+                id: "ecdsa_secp",
+                name: "19. 타원곡선 secp256k1 공식",
+                title: "ECDSA secp256k1 타원곡선 서명 검증 (2008)",
+                desc: "사토시 나카모토가 비트코인의 소유권 증명을 위해 2008년 채택한 타원곡선 디지털 서명 알고리즘(ECDSA)의 도메인 파라미터 표준 방정식입니다. 타원곡선 위의 점들의 가산 및 대수 연산 복잡성을 활용하여, 엄청나게 작은 크기의 개인키로부터 안전하게 공개키를 추출하고 트랜잭션의 위변조를 완벽 차단합니다.",
+                math: "y^2 = x^3 + 7 (mod p)",
+                mathExplanation: "<strong>[secp256k1 타원곡선의 대수학적 구조 설명]</strong><br>방정식 계수 a=0, b=7을 취하는 특수 비특이 타원곡선 구조입니다. 거대한 소수 p = 2^256 - 2^32 - 977 상에서 정의됩니다. 이 특수한 수학 구조는 컴퓨터 아키텍처 상에서 매우 빠른 스칼라 곱셈 연산 처리가 가능하여 고속 분산 트랜잭션 검증에 최적화된 성능을 선사합니다.",
+                p1Label: "개인키 스칼라 (k)",
+                p2Label: "서명 벡터 (r, s)",
+                defaultP1: "0xABC123",
+                defaultP2: "0x7F8E...A321",
+                encrypt: (text, p1, p2) => {
+                    if(!text) return "트랜잭션 데이터가 비어있습니다.";
+                    let k = p1;
+                    let sig = p2;
+                    let hash = 0;
+                    for(let i=0; i<text.length; i++) hash = (hash << 5) - hash + text.charCodeAt(i);
+                    let pubX = Math.abs(hash * 31) % 9997;
+                    let pubY = Math.abs(hash * 7) % 9997;
+                    
+                    return `--- ECDSA secp256k1 Signature Verification Engine ---\n` +
+                           `[Tx Message Hash]: 0x${Math.abs(hash).toString(16).toUpperCase()}\n` +
+                           `[Derived Public Key Point G]:\n` +
+                           `   X: 0x${pubX.toString(16).toUpperCase()}${pubX}F\n` +
+                           `   Y: 0x${pubY.toString(16).toUpperCase()}${pubY}A\n` +
+                           `[Signature Vectors (r, s)]: Verified with Base Curve Order G\n` +
+                           `-----------------------------------------------------\n` +
+                           `[✓] 타원곡선 점 곱셈 대칭 검증 성립.\n` +
+                           `[결과] 전자서명 검증 완료: 해당 트랜잭션 자산의 정당한 소유주가 승인했음이 증명됨.`;
+                },
+                logs: [
+                    { type: 'info', text: "[서명 커널] secp256k1 타원곡선 암호 모듈 적재 완료." },
+                    { type: 'process', text: "[진행] 프라이빗 키 유한체 정수 링(Ring) 범위 오버플로우 유효성 검증." },
+                    { type: 'process', text: "[연산] 공개키 생성을 위한 기저점 G의 256비트 스칼라 곱셈 연산 개시." },
+                    { type: 'result', text: "[인증] 트랜잭션 전자서명 무결성 매칭 성공. 자산 전송 권한 최종 승인." }
+                ]
+            }
+        };
+
+        const DOM = {
+            sidebar: document.getElementById('sidebar'),
+            title: document.getElementById('theory-title'),
+            desc: document.getElementById('theory-desc'),
+            math: document.getElementById('math-container'),
+            mathExp: document.getElementById('math-explanation'),
+            plainInput: document.getElementById('plain-text'),
+            cipherOutput: document.getElementById('cipher-text'),
+            p1Label: document.getElementById('p1-label'),
+            p2Label: document.getElementById('p2-label'),
+            p1Input: document.getElementById('cipher-key'),
+            p2Input: document.getElementById('cipher-key-2'),
+            execBtn: document.getElementById('execute-btn'),
+            terminal: document.getElementById('terminal-screen'),
+            inputLabel: document.getElementById('input-label'),
+            outputLabel: document.getElementById('output-label')
+        };
+
+        let currentCipherId = Object.keys(CryptoData)[0];
+        let isTyping = false;
+
+        function init() {
+            Object.values(CryptoData).forEach(cipher => {
+                const btn = document.createElement('button');
+                btn.className = `cipher-tab ${cipher.id === currentCipherId ? 'active' : ''}`;
+                btn.textContent = cipher.name;
+                btn.onclick = () => loadCipher(cipher.id);
+                DOM.sidebar.appendChild(btn);
+            });
+
+            loadCipher(currentCipherId);
+            DOM.plainInput.addEventListener('input', runEncryption);
+            DOM.p1Input.addEventListener('input', runEncryption);
+            DOM.p2Input.addEventListener('input', runEncryption);
+            DOM.execBtn.addEventListener('click', triggerTerminalEvent);
+        }
+
+        function loadCipher(id) {
+            currentCipherId = id;
+            const data = CryptoData[id];
+
+            document.querySelectorAll('.cipher-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.includes(data.name));
+            });
+
+            DOM.title.textContent = data.title;
+            DOM.desc.innerHTML = data.desc;
+            DOM.math.textContent = data.math;
+            DOM.mathExp.innerHTML = data.mathExplanation; 
+            
+            DOM.p1Label.textContent = data.p1Label;
+            DOM.p2Label.textContent = data.p2Label;
+            DOM.p1Input.value = data.defaultP1;
+            DOM.p2Input.value = data.defaultP2;
+            
+            if(id === 'nakamoto_poisson') {
+                DOM.inputLabel.textContent = "시뮬레이션 가상 텍스트";
+                DOM.outputLabel.textContent = "나카모토 확률 분석 스트림";
+                DOM.plainInput.value = "ATTACK_SIMULATION_STREAM_BLOCK_CHAIN";
+            } else if(id === 'pow_target') {
+                DOM.inputLabel.textContent = "블록 헤더 데이터 (Block Header)";
+                DOM.outputLabel.textContent = "PoW 마이닝 마스킹 연산 결과";
+                DOM.plainInput.value = "Version: 1, PrevHash: 00000000a1a2b3, MerkleRoot: e3b0c4";
+            } else {
+                DOM.inputLabel.textContent = "송금 트랜잭션 원본 명세 (Tx Data)";
+                DOM.outputLabel.textContent = "ECDSA 서명 대수 구조 매칭 검증";
+                DOM.plainInput.value = "FROM: Alice, TO: Bob, AMOUNT: 50.0 BTC";
+            }
+
+            runEncryption();
+            DOM.terminal.innerHTML = `<span class="terminal-cursor"></span>`;
+        }
+
+        function runEncryption() {
+            const data = CryptoData[currentCipherId];
+            DOM.cipherOutput.value = data.encrypt(DOM.plainInput.value, DOM.p1Input.value, DOM.p2Input.value);
+        }
+
+        async function triggerTerminalEvent() {
+            if (isTyping) return;
+            isTyping = true;
+            DOM.terminal.innerHTML = ""; 
+            
+            const logs = CryptoData[currentCipherId].logs;
+
+            for (let i = 0; i < logs.length; i++) {
+                await typeText(logs[i].text, `log-${logs[i].type}`);
+                await sleep(200);
+            }
+
+            DOM.terminal.innerHTML += `<span class="terminal-cursor"></span>`;
+            isTyping = false;
+        }
+
+        function typeText(text, className) {
+            return new Promise(resolve => {
+                const lineDiv = document.createElement('div');
+                lineDiv.className = `terminal-line ${className}`;
+                DOM.terminal.appendChild(lineDiv);
+                
+                let charIndex = 0;
+                function type() {
+                    if (charIndex < text.length) {
+                        lineDiv.textContent += text.charAt(charIndex);
+                        charIndex++;
+                        DOM.terminal.scrollTop = DOM.terminal.scrollHeight; 
+                        setTimeout(type, Math.random() * 15 + 8); 
+                    } else {
+                        resolve();
+                    }
+                }
+                type();
+            });
+        }
+
+        function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

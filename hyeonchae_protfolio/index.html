@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="Crypto Lab - 조선왕조실록과 현대 기술의 만남, 암호학 연대기 코어 대시보드">
+    
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Crypto Lab — Historical Enterprise Dashboard">
+    <meta property="og:description" content="한지 고서 스타일의 클라이언트 사이드 암호학 아키텍처">
+    
+    <title>Crypto Lab — Royal Archive Dashboard</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Poppins:wght@400;600;700;900&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="theme-traditional">
+
+    <div id="system-preloader" class="preloader" aria-hidden="true">
+        <div class="preloader__spinner"></div>
+    </div>
+
+    <div id="app" class="dashboard-app-context">
+        
+        <header class="app-header" role="banner">
+            <div class="app-header__container">
+                <div class="app-header__telemetry">
+                    <span class="status-pulse" aria-hidden="true"></span>
+                    <span class="status-lbl">ARCHIVE_RECORD: LATEST</span>
+                </div>
+                <div class="app-header__utility">
+                    <button id="theme-toggle-btn" class="util-btn" aria-label="색상 반전">INVERT</button>
+                    <button id="system-diagnostic-btn" class="util-btn" aria-label="기록 진단">DIAGNOSTIC</button>
+                </div>
+            </div>
+        </header>
+
+        <section class="hero-viewport" aria-labelledby="main-hero-title">
+            <div class="hero-viewport__wrapper">
+                <h1 id="main-hero-title" class="hero-viewport__title">암호학 공식</h1>
+                <div class="hero-viewport__divider" role="presentation"></div>
+            </div>
+        </section>
+
+        <main class="dashboard-stage" role="main" aria-label="암호학 연대기 실록 고서">
+            
+            <section class="grid-partition" aria-label="상단 고서 파트">
+                <div id="runtime-grid-top" class="grid-container grid-container--3cols">
+                    </div>
+            </section>
+            
+            <section class="grid-partition" aria-label="하단 고서 파트">
+                <div id="runtime-grid-bottom" class="grid-container grid-container--4cols">
+                    </div>
+            </section>
+
+        </main>
+
+        <footer class="app-footer" role="contentinfo">
+            <div class="app-footer__container">
+                <p class="copyright">&copy; 20619 차현채 : 응용프로그래밍 프로젝트 완성본</p>
+                <div class="footer-meta">
+                    <span>TYPE: CHRONICLE</span>
+                    <span>v1.5.0-full-hanji</span>
+                </div>
+            </div>
+        </footer>
+
+    </div>
+
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+        <filter id="royal-hanji-filter">
+            <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="3" result="noise" />
+            <feColorMatrix type="matrix" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.06 0" in="noise" result="monoNoise"/>
+            <feBlend mode="multiply" in="SourceGraphic" in2="monoNoise" />
+        </filter>
+    </svg>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

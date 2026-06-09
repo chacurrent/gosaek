@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ko" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Lab - [02] 현대 비대칭키</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Poppins:wght@400;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+    <style>
+        :root {
+            --color-hanji-bg: #f4edd9;
+            --color-hanji-card: #fbf9f3;
+            --color-ink-black: #1a1917;
+            --color-ink-muted: #595349;
+            --color-royal-red: #8a2411;
+            --color-border: #e2d6be;
+            
+            --terminal-bg: #0a0a0a;
+            --terminal-green: #4af626;
+            --terminal-yellow: #f5d142;
+            --terminal-red: #ff3333;
+            --terminal-text: #cccccc;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--color-hanji-bg);
+            color: var(--color-ink-black);
+            font-family: 'Gowun Batang', serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-image: 
+                linear-gradient(to right, rgba(26,25,23,0.015) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(26,25,23,0.015) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+
+        header {
+            padding: 20px 40px;
+            border-bottom: 2px solid var(--color-ink-black);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .back-btn {
+            background: none; border: 1px solid var(--color-ink-black);
+            padding: 8px 16px; font-family: 'Poppins', serif; font-weight: 600;
+            cursor: pointer; color: var(--color-ink-black);
+            transition: all 0.3s ease;
+        }
+        .back-btn:hover { background-color: var(--color-ink-black); color: var(--color-hanji-bg); }
+        .header-title { font-size: 1.5rem; font-weight: 700; }
+
+        .workspace {
+            display: flex; flex: 1; height: calc(100vh - 75px); overflow: hidden;
+        }
+
+        .sidebar {
+            width: 280px; border-right: 1px solid var(--color-border);
+            padding: 30px 20px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto;
+        }
+        .cipher-tab {
+            width: 100%; text-align: left; padding: 16px;
+            background: transparent; border: 1px solid var(--color-border);
+            font-family: 'Gowun Batang', serif; font-size: 1.1rem; font-weight: 700;
+            color: var(--color-ink-muted); cursor: pointer; transition: all 0.3s ease; border-radius: 8px;
+        }
+        .cipher-tab:hover { border-color: var(--color-ink-black); color: var(--color-ink-black); }
+        .cipher-tab.active { background-color: var(--color-ink-black); color: var(--color-hanji-bg); border-color: var(--color-ink-black); }
+
+        .main-canvas {
+            flex: 1; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; gap: 30px;
+        }
+
+        .theory-section {
+            background: var(--color-hanji-card); border: 1px solid var(--color-border);
+            padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        }
+        .theory-section h2 { font-size: 2rem; margin-bottom: 16px; color: var(--color-ink-black); }
+        .theory-section p { font-size: 1.1rem; line-height: 1.6; color: var(--color-ink-muted); margin-bottom: 24px; word-break: keep-all; }
+        .math-box {
+            background: rgba(26, 25, 23, 0.03); border-left: 4px solid var(--color-royal-red);
+            padding: 20px; font-size: 1.5rem; text-align: center; overflow-x: auto; margin-bottom: 16px;
+        }
+        .math-explanation {
+            background: transparent; border: 1px dashed var(--color-border);
+            padding: 20px; font-size: 1rem; color: var(--color-ink-black);
+            line-height: 1.6; border-radius: 6px; font-family: 'Gowun Batang', serif;
+        }
+        .math-explanation strong { color: var(--color-royal-red); }
+
+        .sandbox-section {
+            background: var(--color-hanji-card); border: 1px solid var(--color-border);
+            padding: 30px; border-radius: 12px;
+        }
+        .sandbox-header { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; }
+        .io-container { display: flex; gap: 20px; align-items: stretch; }
+        .io-box { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+        .io-box label { font-family: 'Poppins', sans-serif; font-size: 0.85rem; font-weight: 600; }
+        .io-box textarea {
+            width: 100%; height: 120px; padding: 16px; resize: none;
+            background: var(--color-hanji-bg); border: 1px solid var(--color-ink-black);
+            font-family: 'Fira Code', monospace; font-size: 1rem; color: var(--color-ink-black); outline: none; border-radius: 4px;
+        }
+        .controls { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; padding: 0 20px; }
+        .key-input { width: 140px; padding: 10px; text-align: center; border: 1px solid var(--color-ink-black); background: transparent; font-family: 'Fira Code'; font-size: 1rem; }
+        .execute-btn {
+            background: var(--color-ink-black); color: var(--color-hanji-bg); border: none;
+            padding: 12px 24px; font-weight: 700; cursor: pointer; border-radius: 4px; font-family: 'Gowun Batang', serif; font-size: 1.1rem;
+            transition: background 0.3s ease;
+        }
+        .execute-btn:hover { background: var(--color-royal-red); }
+
+        .terminal-section {
+            background: var(--terminal-bg); border: 2px solid var(--color-ink-black);
+            border-radius: 8px; padding: 20px; height: 250px; overflow-y: auto;
+            font-family: 'Fira Code', monospace; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        }
+        .terminal-line { margin-bottom: 8px; line-height: 1.5; font-size: 0.95rem; }
+        .log-info { color: var(--terminal-text); }
+        .log-process { color: var(--terminal-yellow); }
+        .log-result { color: var(--terminal-green); }
+        .log-error { color: var(--terminal-red); }
+        .terminal-cursor { display: inline-block; width: 8px; height: 15px; background: var(--terminal-green); animation: blink 1s step-end infinite; }
+
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <button class="back-btn" onclick="history.back()">← 메인 대시보드로 복귀</button>
+        <div class="header-title">[02] 현대 비대칭키 암호 (공개키)</div>
+        <div style="width: 150px;"></div> 
+    </header>
+
+    <div class="workspace">
+        <nav class="sidebar" id="sidebar"></nav>
+
+        <main class="main-canvas" id="main-canvas">
+            
+            <section class="theory-section">
+                <h2 id="theory-title">로딩 중...</h2>
+                <p id="theory-desc"></p>
+                <div class="math-box" id="math-container"></div>
+                <div class="math-explanation" id="math-explanation"></div>
+            </section>
+
+            <section class="sandbox-section">
+                <div class="sandbox-header">알고리즘 샌드박스 (실시간 암호화)</div>
+                <div class="io-container">
+                    <div class="io-box">
+                        <label id="plain-label">평문 (Plaintext)</label>
+                        <textarea id="plain-text" placeholder="데이터를 입력하세요..."></textarea>
+                    </div>
+                    <div class="controls">
+                        <label id="key-label">공개키 (Public Key)</label>
+                        <input type="text" id="cipher-key" class="key-input" value="">
+                        <button class="execute-btn" id="execute-btn">분석 가동</button>
+                    </div>
+                    <div class="io-box">
+                        <label>암호화 결과물 (Output)</label>
+                        <textarea id="cipher-text" readonly></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <section class="terminal-section" id="terminal-screen"></section>
+        </main>
+		
+		<footer class="app-footer" role="contentinfo">
+            <div class="app-footer__container">
+                <p class="copyright">&copy; 20619 차현채 : 응용프로그래밍 프로젝트 완성본</p>
+                <div class="footer-meta">
+                    <span>TYPE: CHRONICLE</span>
+                    <span>v1.5.0-full-hanji</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const CryptoData = {
+            rsa: {
+                id: "rsa",
+                name: "1. RSA 알고리즘",
+                title: "RSA (소인수분해 기반 암호)",
+                desc: "1977년 개발된 현대 암호학의 상징입니다. 자물쇠(공개키)는 세상 모두에게 공개하고, 열쇠(개인키)는 나만 가지는 비대칭 구조를 최초로 상용화했습니다.",
+                math: "$$C = P^e \\pmod n \\quad \\text{(암호화)}$$",
+                mathExplanation: "<strong>[초간단 수식 해석]</strong><br>엄청나게 큰 두 개의 소수를 곱해서 $n$을 만듭니다. 숫자 두 개를 곱하는 건 1초도 안 걸리지만, <strong>결과값 $n$만 보고 원래 어떤 두 소수를 곱했는지 알아내는(소인수분해) 것은 슈퍼컴퓨터로도 수조 년이 걸립니다.</strong> 이 '한쪽 방향으로만 계산하기 쉬운 특성'이 RSA의 핵심 방패입니다.",
+                inputType: "text",
+                defaultKey: "e=65537",
+                keyLabel: "수신자의 공개키(e)",
+                plainLabel: "보낼 메시지 (평문)",
+                encrypt: (text, key) => {
+                    let hash = 0;
+                    for (let i = 0; i < text.length; i++) hash = Math.imul(31, hash) + text.charCodeAt(i) | 0;
+                    const hex = Math.abs(hash).toString(16).padStart(16, '0').toUpperCase();
+                    return `[RSA-2048 Ciphertext Block]\n0x${hex}A9F1B2C3D4...\n(인터셉트 시 해독 불가)`;
+                },
+                // {plain}, {key} 플레이스홀더를 통해 사용자 입력을 동적으로 낚아챔
+                logs: [
+                    { type: 'info', text: "[시스템] 타겟 문자열 '{plain}'의 전송 패킷 인터셉트." },
+                    { type: 'process', text: "[분석] 사용된 공개키 파라미터 확인: {key}." },
+                    { type: 'info', text: "[공격] 획득한 암호문을 기반으로 소인수분해 알고리즘(GNFS) 가동 준비..." },
+                    { type: 'process', text: "[진행] 클라우드 GPU 클러스터 10,000대 병렬 연산 할당 중..." },
+                    { type: 'error', text: "[오류] 소요 시간 임계치 초과 예상. 2048-bit 소인수분해 불가." },
+                    { type: 'result', text: "[방어 성공] 해독 실패. '{plain}' 원문 복원 불가." }
+                ]
+            },
+            dh: {
+                id: "dh",
+                name: "2. 디피-헬만 (Diffie-Hellman)",
+                title: "디피-헬만 키 교환 (DH)",
+                desc: "1976년 발표된 비대칭키의 시초입니다. 해커가 모르게 둘만의 '비밀번호'를 안전하게 합의해서 나눠가질 수 있게 해주는 공식입니다.",
+                math: "$$K = A^b \\pmod p = B^a \\pmod p$$",
+                mathExplanation: "<strong>[초간단 수식 해석]</strong><br>앨리스와 밥이 각자 <strong>자신만의 비밀 물감($a, b$)</strong>을 가집니다. 공용 물감에 자기 비밀 물감을 섞은 뒤($A, B$), 섞인 결과물만 서로 교환합니다. 해커는 섞인 물감만 볼 수 있죠. 교환받은 물감에 다시 한 번 자기 비밀 물감을 섞으면? <strong>둘 다 똑같은 색($K$)이 완성됩니다!</strong> 섞인 물감에서 원래 색을 분리해내는(이산대수) 것은 수학적으로 불가능합니다.",
+                inputType: "number",
+                defaultKey: "15",
+                keyLabel: "나의 비밀 숫자 (b)",
+                plainLabel: "상대방이 보낸 혼합값 (A)",
+                encrypt: (text, key) => {
+                    return `[통신 채널 상태: 안전함]\n상대방의 값(${text})과 나의 비밀 숫자(${key})를 결합 중...\n\n생성된 최종 대칭키 (Shared Secret K):\n0x9B8A7C6D5E4F...`;
+                },
+                logs: [
+                    { type: 'info', text: "[시스템] 키 교환 프로토콜 도청. 상대방의 공개값 A='{plain}' 감지." },
+                    { type: 'process', text: "[분석] 목표: 나의 비밀 숫자 b='{key}'를 알아내 최종 키 탈취." },
+                    { type: 'info', text: "[공격] 이산대수 문제(Discrete Logarithm Problem) 풀이 알고리즘 적용 중..." },
+                    { type: 'error', text: "[오류] 혼합값 '{plain}'에서 밑(base)을 역추산할 수 없습니다." },
+                    { type: 'result', text: "[방어 성공] 통신망 패킷을 전부 도청했음에도 최종 비밀키 획득 실패." }
+                ]
+            },
+            ecc: {
+                id: "ecc",
+                name: "3. 타원곡선암호 (ECC)",
+                title: "타원곡선암호 (Elliptic Curve Cryptography)",
+                desc: "RSA의 단점(느린 속도와 무거운 연산량)을 극복하기 위해 등장한 현대 비대칭키의 표준입니다. 스마트폰, IoT 기기, 블록체인에 쓰입니다.",
+                math: "$$Q = d \\times G$$",
+                mathExplanation: "<strong>[초간단 수식 해석]</strong><br>타원 모양의 곡선 그래프 위에서 시작점($G$)을 기준으로 당구공을 튕기듯 선을 긋습니다. 규칙에 따라 점을 $d$번 튕겨서 도착점($Q$)을 구하는 건 쉽지만, <strong>시작점과 도착점만 보고 '도대체 몇 번을 튕겼는지($d$)' 알아내는 건 불가능</strong>합니다.",
+                inputType: "text",
+                defaultKey: "secp256k1",
+                keyLabel: "타원곡선 종류",
+                plainLabel: "서명할 트랜잭션",
+                encrypt: (text, key) => {
+                    return `[ECC Public Key (Q) 생성 완료]\nCurve: ${key}\n\n[서명 대상]: ${text}\nX: 79BE667EF9DCBBAC55...\nY: 483ADA7726A3C4655D...`;
+                },
+                logs: [
+                    { type: 'info', text: "[시스템] 블록체인 트랜잭션 '{plain}' 감지." },
+                    { type: 'process', text: "[분석] 사용 곡선 '{key}' 기반 공개키 좌표(Q) 확보." },
+                    { type: 'info', text: "[공격] 폴라드 로(Pollard's rho) 알고리즘 가동. 몇 번 튕겼는지(d) 역추적 시작." },
+                    { type: 'process', text: "[진행] 점 덧셈(Point Addition) 역연산 시뮬레이션 중..." },
+                    { type: 'error', text: "[오류] 기하급수적인 연산량으로 인해 해독 불가." },
+                    { type: 'result', text: "[방어 성공] 개인키 복원 실패. 트랜잭션 위변조 불가." }
+                ]
+            }
+        };
+
+        const DOM = {
+            sidebar: document.getElementById('sidebar'),
+            title: document.getElementById('theory-title'),
+            desc: document.getElementById('theory-desc'),
+            math: document.getElementById('math-container'),
+            mathExp: document.getElementById('math-explanation'),
+            plainLabel: document.getElementById('plain-label'),
+            plainInput: document.getElementById('plain-text'),
+            cipherOutput: document.getElementById('cipher-text'),
+            keyLabel: document.getElementById('key-label'),
+            keyInput: document.getElementById('cipher-key'),
+            execBtn: document.getElementById('execute-btn'),
+            terminal: document.getElementById('terminal-screen')
+        };
+
+        let currentCipherId = Object.keys(CryptoData)[0];
+        let isTyping = false;
+
+        function init() {
+            Object.values(CryptoData).forEach(cipher => {
+                const btn = document.createElement('button');
+                btn.className = `cipher-tab ${cipher.id === currentCipherId ? 'active' : ''}`;
+                btn.textContent = cipher.name;
+                btn.onclick = () => loadCipher(cipher.id);
+                DOM.sidebar.appendChild(btn);
+            });
+
+            loadCipher(currentCipherId);
+            DOM.plainInput.addEventListener('input', runEncryption);
+            DOM.keyInput.addEventListener('input', runEncryption);
+            DOM.execBtn.addEventListener('click', triggerTerminalEvent);
+        }
+
+        function loadCipher(id) {
+            currentCipherId = id;
+            const data = CryptoData[id];
+
+            document.querySelectorAll('.cipher-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.includes(data.name));
+            });
+
+            DOM.title.textContent = data.title;
+            DOM.desc.innerHTML = data.desc;
+            DOM.math.innerHTML = data.math;
+            DOM.mathExp.innerHTML = data.mathExplanation; 
+            
+            // [수정1] 수학 수식 렌더러를 설명 박스(mathExp)에도 동일하게 적용!
+            const katexOptions = {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ]
+            };
+            renderMathInElement(DOM.math, katexOptions);
+            renderMathInElement(DOM.mathExp, katexOptions);
+
+            DOM.keyLabel.textContent = data.keyLabel;
+            DOM.keyInput.type = data.inputType;
+            DOM.keyInput.value = data.defaultKey;
+            
+            DOM.plainLabel.textContent = data.plainLabel;
+            if(id === "rsa") DOM.plainInput.value = "이 메시지는 나만 볼 수 있어야 합니다.";
+            else if(id === "dh") DOM.plainInput.value = "23"; 
+            else DOM.plainInput.value = "송금: 100 BTC -> Alice";
+            
+            runEncryption();
+            DOM.terminal.innerHTML = `<span class="terminal-cursor"></span>`;
+        }
+
+        function runEncryption() {
+            const data = CryptoData[currentCipherId];
+            DOM.cipherOutput.value = data.encrypt(DOM.plainInput.value, DOM.keyInput.value);
+        }
+
+        async function triggerTerminalEvent() {
+            if (isTyping) return;
+            isTyping = true;
+            DOM.terminal.innerHTML = ""; 
+            
+            const logs = CryptoData[currentCipherId].logs;
+            // [수정2] 사용자가 현재 입력한 값들을 변수로 가져옴
+            const currentPlain = DOM.plainInput.value.substring(0, 15) + (DOM.plainInput.value.length > 15 ? "..." : "");
+            const currentKey = DOM.keyInput.value;
+
+            for (let i = 0; i < logs.length; i++) {
+                // 로그 텍스트 내부의 {plain}, {key} 문자를 실제 입력값으로 치환
+                let dynamicText = logs[i].text
+                    .replace(/{plain}/g, currentPlain || "빈 문자열")
+                    .replace(/{key}/g, currentKey || "없음");
+
+                await typeText(dynamicText, `log-${logs[i].type}`);
+                await sleep(300); 
+            }
+
+            DOM.terminal.innerHTML += `<span class="terminal-cursor"></span>`;
+            isTyping = false;
+        }
+
+        function typeText(text, className) {
+            return new Promise(resolve => {
+                const lineDiv = document.createElement('div');
+                lineDiv.className = `terminal-line ${className}`;
+                DOM.terminal.appendChild(lineDiv);
+                
+                let charIndex = 0;
+                
+                function type() {
+                    if (charIndex < text.length) {
+                        lineDiv.textContent += text.charAt(charIndex);
+                        charIndex++;
+                        DOM.terminal.scrollTop = DOM.terminal.scrollHeight; 
+
+                        let speed = Math.random() * 40 + 10;
+                        if (Math.random() < 0.03) speed += 150;
+
+                        setTimeout(type, speed); 
+                    } else {
+                        resolve();
+                    }
+                }
+                type(); 
+            });
+        }
+
+        function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
